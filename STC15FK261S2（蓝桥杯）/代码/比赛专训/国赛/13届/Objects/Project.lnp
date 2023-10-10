@@ -1,0 +1,13 @@
+".\Objects\STARTUP.obj",
+".\Objects\main.obj",
+".\Objects\HC573.obj",
+".\Objects\KEY.obj",
+".\Objects\PCF8591.obj",
+".\Objects\Timer.obj",
+".\Objects\AT24C02.obj",
+".\Objects\Sonic.obj",
+".\Objects\Delay.obj",
+".\Objects\iic.obj" 
+TO ".\Objects\Project" 
+PRINT(".\Listings\Project.m51") RAMSIZE(256) 
+DISABLEWARNING (16) 

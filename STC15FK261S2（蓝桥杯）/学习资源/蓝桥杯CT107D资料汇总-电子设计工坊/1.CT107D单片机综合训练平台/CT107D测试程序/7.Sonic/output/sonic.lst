@@ -1,0 +1,166 @@
+C51 COMPILER V9.59.0.0   SONIC                                                             03/23/2023 15:43:53 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE SONIC
+OBJECT MODULE PLACED IN .\output\sonic.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE sonic.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\output\sonic.ls
+                    -t) TABS(2) OBJECT(.\output\sonic.obj)
+
+line level    source
+
+   1          #include <reg52.h>
+   2          #include <intrins.h>
+   3          
+   4          sbit TX= P1^0;
+   5          sbit RX= P1^1;
+   6          
+   7          unsigned char dspflag;
+   8          unsigned char cnt;
+   9          unsigned char tflag;
+  10          unsigned char code dsp_code_ca[] = {0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90};
+  11          
+  12          void display(unsigned int d);
+  13          void init_t(void);
+  14          
+  15          void Pulse()
+  16          {
+  17   1        unsigned char i;
+  18   1        for (i =0 ;i<10; ++i) 
+  19   1        {
+  20   2          _nop_();
+  21   2          _nop_();
+  22   2          _nop_();
+  23   2          _nop_();
+  24   2          _nop_();
+  25   2          _nop_();
+  26   2          _nop_();
+  27   2          _nop_();
+  28   2          _nop_();
+  29   2      //    _nop_();     //延时,调整发射频率
+  30   2      
+  31   2          TX = ~TX;    //P1_0 超声波发射端
+  32   2        }
+  33   1      }
+  34          
+  35          unsigned int sonic()
+  36          {
+  37   1        unsigned int n;
+  38   1        RX=1;       //P1_1  超声波接收端，在接收到信号时产生一个低脉冲
+  39   1        TR1=0;        //关闭定时器1
+  40   1        TH1=TL1=0;
+  41   1        Pulse();
+  42   1        TR1=1;      //打开定时器1 
+  43   1        TF1=0;         //定时器1中断结束
+  44   1        for(n=0;n<160;n++);     // 排出相邻干扰
+  45   1        while( RX ==1 && TF1 == 0 ) ;
+  46   1        TR1=0;
+  47   1        if ( TF1 ) 
+  48   1        {
+  49   2          n=9999;
+  50   2        }else
+  51   1        {
+  52   2          n=(TH1<<8)+TL1;
+  53   2          n=(unsigned int) ( n*0.017);//0.018446);     //   0.017*12/11.0592
+  54   2        }
+C51 COMPILER V9.59.0.0   SONIC                                                             03/23/2023 15:43:53 PAGE 2   
+
+  55   1        return n;
+  56   1      }
+  57          
+  58          
+  59          
+  60          void main()
+  61          {
+  62   1        unsigned int k;
+  63   1        unsigned int cnt;
+  64   1        init_t(); 
+  65   1        while(1)
+  66   1        {
+  67   2          cnt = sonic();
+  68   2          for(k=0;k<30000;k++)
+  69   2          display(cnt);
+  70   2        } 
+  71   1      }
+  72          
+  73          
+  74          void isr_t0(void) interrupt 1
+  75          {
+  76   1        tflag++;
+  77   1        if(tflag == 16)
+  78   1        {
+  79   2        tflag = 0;
+  80   2        dspflag ++;
+  81   2        if(dspflag == 3)
+  82   2          dspflag = 0;
+  83   2        }
+  84   1      }
+  85          
+  86          void init_t(void)
+  87          { 
+  88   1        TMOD = 0x12;   // 超声用定时器1
+  89   1        TH0 = (25536-50)/256;      //0x06;
+  90   1        TL0 = (25536-50)%256;      //  0x06;
+  91   1        ET0 = 1;
+  92   1        EA = 1;
+  93   1        TR0 = 1;      //启用TF0中断
+  94   1      }
+  95          
+  96          
+  97          void display(unsigned int d)
+  98          {
+  99   1        if((dspflag == 0)&&(d>99))
+ 100   1        {
+ 101   2          P0 = 0xFF;
+ 102   2        P2 |= 0xE0;    //P2和1110 0000“与”，后五位清0
+ 103   2        P2 &= 0x1F;    //P2和0001 1111“或”，后五位置1
+ 104   2      
+ 105   2        P0 = dsp_code_ca[d/100];
+ 106   2        P2 |= 0xE0;
+ 107   2        P2 &= 0x1F;
+ 108   2        P0 = 0x20;
+ 109   2        P2 |= 0xC0;
+ 110   2        P2 &= 0x3F;
+ 111   2        }
+ 112   1        if((dspflag == 1)&&(d>9))
+ 113   1        {
+ 114   2        P0 = 0xFF;
+ 115   2          P2 |= 0xE0;
+ 116   2          P2 &= 0x1F;
+C51 COMPILER V9.59.0.0   SONIC                                                             03/23/2023 15:43:53 PAGE 3   
+
+ 117   2      
+ 118   2        P0 = dsp_code_ca[d%100/10];
+ 119   2          P2 |= 0xE0;
+ 120   2          P2 &= 0x1F;
+ 121   2          P0 = 0x40;
+ 122   2          P2 |= 0xC0;
+ 123   2          P2 &= 0x3F;
+ 124   2        } 
+ 125   1        if(dspflag == 2)
+ 126   1        {
+ 127   2          P0 = 0xFF;
+ 128   2        P2 |= 0xE0;
+ 129   2          P2 &= 0x1F;
+ 130   2      
+ 131   2        P0 = dsp_code_ca[d%100%10]; 
+ 132   2          P2 |= 0xE0;
+ 133   2          P2 &= 0x1F;
+ 134   2          P0 = 0x80;
+ 135   2          P2 |= 0xC0;
+ 136   2          P2 &= 0x3F;
+ 137   2        }  
+ 138   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    402    ----
+   CONSTANT SIZE    =     10    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

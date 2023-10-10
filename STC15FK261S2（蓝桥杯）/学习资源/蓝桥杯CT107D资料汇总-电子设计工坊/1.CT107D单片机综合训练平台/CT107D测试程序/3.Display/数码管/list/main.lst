@@ -1,0 +1,101 @@
+C51 COMPILER V9.00   MAIN                                                                  11/01/2013 10:38:20 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\output\main.obj
+COMPILER INVOKED BY: D:\ruanjiananzhuan\C51\BIN\C51.EXE main.c OPTIMIZE(0,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\list\
+                    -main.lst) OBJECT(.\output\main.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          
+   3          unsigned char code dsp_code_ca[] = {0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90};
+   4          unsigned int tflag;
+   5          unsigned char dspflag;
+   6          unsigned char second;
+   7          unsigned char dflag;
+   8          
+   9          void display(unsigned char d);
+  10          
+  11          void main()
+  12          {
+  13   1        TMOD |= 0x02;
+  14   1        TH0 = 0x06;
+  15   1        TL0 = 0x06;
+  16   1        EA = 1;
+  17   1        ET0 = 1;
+  18   1        TR0 = 1;
+  19   1        while(1)
+  20   1        {
+  21   2          display(second);  
+  22   2        }
+  23   1      }
+  24          
+  25          //T0中断服务函数
+  26          void isr_t0(void) interrupt 1
+  27          {
+  28   1        tflag++;
+  29   1        dflag++;
+  30   1        if(dflag == 16)
+  31   1        {
+  32   2              dflag = 0;
+  33   2              dspflag++;
+  34   2              if(dspflag == 2)
+  35   2                dspflag = 0;
+  36   2        }
+  37   1        if(tflag == 4000)
+  38   1        {
+  39   2          tflag = 0;
+  40   2          second++;
+  41   2          if(second == 60)
+  42   2            second = 0;
+  43   2        }  
+  44   1      }
+  45          
+  46          //显示程序
+  47          void display(unsigned char d)
+  48          {
+  49   1        if((dspflag == 0) && (d/10 != 0))
+  50   1        {
+  51   2              P0 = 0xFF;
+  52   2          P2 |= 0xE0;
+  53   2          P2 &= 0x1F;
+  54   2      
+C51 COMPILER V9.00   MAIN                                                                  11/01/2013 10:38:20 PAGE 2   
+
+  55   2              P0 = dsp_code_ca[d/10];
+  56   2          P2 |= 0xE0;
+  57   2          P2 &= 0x1F;
+  58   2          P0 = 0x40;
+  59   2          P2 |= 0xC0;
+  60   2          P2 &= 0x3F;
+  61   2        } 
+  62   1        if(dspflag == 1)
+  63   1        {
+  64   2          P0 = 0xFF;
+  65   2              P2 |= 0xE0;
+  66   2          P2 &= 0x1F;
+  67   2      
+  68   2              P0 = dsp_code_ca[d%10]; 
+  69   2          P2 |= 0xE0;
+  70   2          P2 &= 0x1F;
+  71   2          P0 = 0x80;
+  72   2          P2 |= 0xC0;
+  73   2          P2 &= 0x3F;
+  74   2        }  
+  75   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    188    ----
+   CONSTANT SIZE    =     10    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      6    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

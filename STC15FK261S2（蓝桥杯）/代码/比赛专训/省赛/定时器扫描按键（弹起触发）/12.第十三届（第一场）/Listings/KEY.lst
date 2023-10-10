@@ -1,0 +1,66 @@
+C51 COMPILER V9.59.0.0   KEY                                                               03/19/2023 11:59:31 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\KEY.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE KEY.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\KEY.lst)
+                    - TABS(2) OBJECT(.\Objects\KEY.obj)
+
+line level    source
+
+   1          #include "KEY.h"
+   2          
+   3          static uc KeyNum;
+   4          
+   5          uc KEY_GetState()
+   6          {
+   7   1        uc Num=0;
+   8   1        
+   9   1        P3|=0X3F;
+  10   1        P4|=0X14;
+  11   1        P32=0;
+  12   1        if(P35==0){Num=13;}
+  13   1        if(P34==0){Num=17;}
+  14   1        
+  15   1        P3|=0X3F;
+  16   1        P4|=0X14;
+  17   1        P33=0;
+  18   1        if(P35==0){Num=12;}
+  19   1        if(P34==0){Num=16;}
+  20   1        
+  21   1        return Num;
+  22   1      }
+  23          
+  24          void KEY_Loop()
+  25          {
+  26   1        static uc L_State,N_State;
+  27   1        L_State=N_State;
+  28   1        N_State=KEY_GetState();
+  29   1      
+  30   1        if(L_State==12 && N_State==0){KeyNum=12;}
+  31   1        if(L_State==13 && N_State==0){KeyNum=13;}
+  32   1        if(L_State==16 && N_State==0){KeyNum=16;}
+  33   1        if(L_State==17 && N_State==0){KeyNum=17;}
+  34   1      }
+  35          
+  36          uc Key_Matrix()
+  37          {
+  38   1        uc Temp=0;
+  39   1        Temp=KeyNum;
+  40   1        KeyNum=0;
+  41   1        return Temp;
+  42   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    109    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

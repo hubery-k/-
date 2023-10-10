@@ -1,0 +1,24 @@
+C51 COMPILER V9.56.0.0   DS18B20                                                           03/18/2018 18:14:09 PAGE 1   
+
+
+C51 COMPILER V9.56.0.0, COMPILATION OF MODULE DS18B20
+OBJECT MODULE PLACED IN .\Objects\ds18b20.obj
+COMPILER INVOKED BY: G:\Study softwares\Keil\C51\BIN\C51.EXE D:\BaiduNetdiskDownload\蓝桥杯单片机初赛教程\驱动代码参考\d
+                    -s18b20.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\ds18b20.lst) TABS(2) OBJECT(.\Objects\ds18b20.obj)
+
+line level    source
+
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    121    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----       1
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

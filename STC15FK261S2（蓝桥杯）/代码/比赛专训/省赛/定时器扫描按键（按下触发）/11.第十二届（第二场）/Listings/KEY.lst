@@ -1,0 +1,55 @@
+C51 COMPILER V9.59.0.0   KEY                                                               04/07/2023 23:47:08 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\KEY.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE KEY.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\KEY.lst)
+                    - TABS(2) OBJECT(.\Objects\KEY.obj)
+
+line level    source
+
+   1          #include "KEY.h"
+   2          
+   3          static uc KeyNum;
+   4          bit Stop;
+   5          uc Trg,Cont;
+   6          void BTN()
+   7          {
+   8   1        uc Dat;
+   9   1        Dat=P3^0XFF;
+  10   1        Trg=Dat&(Dat^Cont);
+  11   1        Cont=Dat;
+  12   1      }
+  13          
+  14          void KEY_Loop()
+  15          {
+  16   1        BTN();
+  17   1        if(Trg&0X01){KeyNum=7;AUXR|=0x10;Stop=0;} //S7按下打开定时器2
+  18   1        if(Trg&0X02){KeyNum=6;}
+  19   1        if(Trg&0X04){KeyNum=5;}
+  20   1        if(Trg&0X08){KeyNum=4;}
+  21   1        
+  22   1        if(Cont==0){AUXR&=~0x10;Stop=1;}    //松开按键关闭定时器2停止计时
+  23   1      }
+  24          
+  25          uc KEY()
+  26          {
+  27   1        uc Temp=0;
+  28   1        Temp=KeyNum;
+  29   1        KeyNum=0;
+  30   1        return Temp;
+  31   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     68    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

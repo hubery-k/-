@@ -1,0 +1,50 @@
+C51 COMPILER V9.59.0.0   DS18B20                                                           04/02/2023 00:08:52 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE DS18B20
+OBJECT MODULE PLACED IN .\Objects\DS18B20.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE DS18B20.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\DS18
+                    -B20.lst) TABS(2) OBJECT(.\Objects\DS18B20.obj)
+
+line level    source
+
+   1          #include "DS18B20.h"
+   2          
+   3          #define SKIP_ROM 0XCC
+   4          #define T_CONVERT 0X44
+   5          #define T_READ 0XBE
+   6          
+   7          void T_Convert()
+   8          {
+   9   1        init_ds18b20();
+  10   1        Write_DS18B20(SKIP_ROM);//跳过寻找需要通信的设备，因为就这一个设备
+  11   1        Write_DS18B20(T_CONVERT);
+  12   1      }
+  13          f T_Read()
+  14          {
+  15   1        uc TLSB,TMSB;
+  16   1        ui Temp;
+  17   1        f T;
+  18   1        init_ds18b20();
+  19   1        Write_DS18B20(SKIP_ROM);
+  20   1        Write_DS18B20(T_READ);
+  21   1        TLSB=Read_DS18B20();
+  22   1        TMSB=Read_DS18B20();
+  23   1        Temp=(TMSB<<8)|TLSB;
+  24   1        T=Temp*0.0625;
+  25   1        return T;
+  26   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     56    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

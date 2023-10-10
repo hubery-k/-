@@ -1,0 +1,61 @@
+C51 COMPILER V9.59.0.0   KEY                                                               04/07/2023 23:53:08 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\KEY.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE KEY.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\KEY.lst)
+                    - TABS(2) OBJECT(.\Objects\KEY.obj)
+
+line level    source
+
+   1          #include "KEY.h"
+   2          
+   3          static uc KeyNum;
+   4          #define set(x) P4=(x>>3)|(x>>4);P3=x
+   5          #define get() ((P4&0X10)<<3)|((P4&0x04)<<4)|(P3&0X3F)
+   6          
+   7          uc Trg,Cont;
+   8          void KEY_KBD()
+   9          {
+  10   1        uc Dat;
+  11   1        set(0X0F);
+  12   1        Dat=get();
+  13   1        set(0XF0);
+  14   1        Dat=(Dat|get())^0XFF;
+  15   1        Trg=Dat&(Dat^Cont);
+  16   1        Cont=Dat;
+  17   1      }
+  18          
+  19          void KEY_Loop()
+  20          {
+  21   1        KEY_KBD();
+  22   1        switch(Trg^0XFF)
+  23   1        {
+  24   2          case 0XD7:KeyNum=12;break;
+  25   2          case 0XDB:KeyNum=13;break;
+  26   2          case 0XE7:KeyNum=16;break;
+  27   2          case 0XEB:KeyNum=17;break;
+  28   2        }
+  29   1      }
+  30          
+  31          uc Key_Matrix()
+  32          {
+  33   1        uc Temp=0;
+  34   1        Temp=KeyNum;
+  35   1        KeyNum=0;
+  36   1        return Temp;
+  37   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    116    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

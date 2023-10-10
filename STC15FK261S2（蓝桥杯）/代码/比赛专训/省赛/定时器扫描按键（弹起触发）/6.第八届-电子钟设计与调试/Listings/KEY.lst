@@ -1,0 +1,59 @@
+C51 COMPILER V9.59.0.0   KEY                                                               03/21/2023 22:59:44 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\KEY.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE KEY.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\KEY.lst)
+                    - TABS(2) OBJECT(.\Objects\KEY.obj)
+
+line level    source
+
+   1          #include "KEY.h"
+   2          
+   3          static unsigned char KeyNum;
+   4          unsigned char Key_GetState()
+   5          {
+   6   1        unsigned char Num=0;
+   7   1        if(KEY7==0){Num=7;};
+   8   1        if(KEY6==0){Num=6;};
+   9   1        if(KEY5==0){Num=5;};
+  10   1        if(KEY4==0){Num=4;};
+  11   1        
+  12   1        return Num;
+  13   1      }
+  14          
+  15          
+  16          void Key_Loop()
+  17          {
+  18   1        static unsigned char N_State,L_State;
+  19   1        L_State=N_State;
+  20   1        N_State=Key_GetState();
+  21   1        
+  22   1        if(L_State==7&&N_State==0){KeyNum=7;}
+  23   1        if(L_State==6&&N_State==0){KeyNum=6;}
+  24   1        if(L_State==5&&N_State==0){KeyNum=5;}
+  25   1        if(L_State==4&&N_State==0){KeyNum=4;}
+  26   1      }
+  27          
+  28          /*返回键值并清除按键状态*/
+  29          unsigned char Key()
+  30          {
+  31   1        unsigned char Temp;
+  32   1        Temp=KeyNum;
+  33   1        KeyNum=0;
+  34   1        return Temp;
+  35   1      } 
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     93    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

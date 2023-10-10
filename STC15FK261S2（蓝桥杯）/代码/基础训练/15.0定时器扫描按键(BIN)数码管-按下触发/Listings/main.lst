@@ -1,0 +1,91 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              03/19/2023 13:34:13 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE APP\main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\BSP\inc;.\TOOL\inc) DEBUG OBJE
+                    -CTEXTEND PRINT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "BUZZER.h"
+   2          #include "Nixie.h"
+   3          #include "KEY.h"
+   4          #include "Timer.h"
+   5          #include "LED.h"
+   6          
+   7          unsigned char code SMG_nodot[19]=
+   8          {0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0x88,0x80,0xc6,0xc0,0x86,0x8e,0xbf,0x7f,0XFF};
+   9          unsigned char code SMG_dot[16]=   
+  10          {0x40,0x79,0x24,0x30,0x19,0x12,0x02,0x78,0x00,0x10,0x08,0x03,0x46,0x21,0x06,0x0e};
+  11          
+  12          
+  13          unsigned char T0Count1;
+  14          unsigned char T0Count2;
+  15          unsigned char KeyNum;
+  16          unsigned char i,j,k,l;
+  17          bit Key_flag;
+  18          
+  19          
+  20          
+  21          void main(void)
+  22          {
+  23   1        BUZZER_Init();
+  24   1        Timer0Init();
+  25   1        while(1)
+  26   1        {
+  27   2          if(Key_flag==1)
+  28   2          {
+  29   3            Key_flag=0;
+  30   3            BTN();
+  31   3            if(Trg & 0x01)//s7(判断P30是否为0-S7是否按下)
+  32   3            {
+  33   4              Nixie_SetBuf(0,SMG_nodot[i++]);
+  34   4            }
+  35   3            if(Trg & 0x02)//s6
+  36   3            {
+  37   4              Nixie_SetBuf(1,SMG_nodot[j++]);
+  38   4            }
+  39   3            if(Trg & 0x04)//s5
+  40   3            {
+  41   4              Nixie_SetBuf(2,SMG_nodot[k++]);
+  42   4            }
+  43   3            if(Trg & 0x08)//s4
+  44   3            {
+  45   4              Nixie_SetBuf(3,SMG_nodot[l++]);
+  46   4            }
+  47   3          }
+  48   2        }
+  49   1      }
+  50          
+  51          void Timer0_Routine(void) interrupt 1
+  52          {
+  53   1        T0Count1++;
+  54   1        if(T0Count1==2)//2ms扫描显示数码管1次
+C51 COMPILER V9.59.0.0   MAIN                                                              03/19/2023 13:34:13 PAGE 2   
+
+  55   1        {
+  56   2          T0Count1=0;
+  57   2          Nixie_Loop();
+  58   2        }
+  59   1        T0Count2++;
+  60   1        if(T0Count2==10)//10ms扫描显示按键1次
+  61   1        {
+  62   2          T0Count2=0;
+  63   2          Key_flag=1;
+  64   2        }
+  65   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    185    ----
+   CONSTANT SIZE    =     35    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      7    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

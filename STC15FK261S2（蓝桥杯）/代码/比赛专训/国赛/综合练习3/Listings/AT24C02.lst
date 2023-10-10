@@ -1,0 +1,61 @@
+C51 COMPILER V9.59.0.0   AT24C02                                                           06/09/2023 14:44:21 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE AT24C02
+OBJECT MODULE PLACED IN .\Objects\AT24C02.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE AT24C02.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\AT24
+                    -C02.lst) TABS(2) OBJECT(.\Objects\AT24C02.obj)
+
+line level    source
+
+   1          #include "AT24C02.h"
+   2          
+   3          #define AT24C02_ADDR 0XA0
+   4          
+   5          uc AT24C02_ReadByte(uc Addr)
+   6          {
+   7   1        uc Dat;
+   8   1        I2CStart();
+   9   1        I2CSendByte(AT24C02_ADDR|0X00);
+  10   1        I2CWaitAck();
+  11   1        I2CSendByte(Addr);
+  12   1        I2CWaitAck();
+  13   1        I2CStop();
+  14   1        
+  15   1        I2CStart();
+  16   1        I2CSendByte(AT24C02_ADDR|0X01);
+  17   1        I2CWaitAck();
+  18   1        Dat=I2CReceiveByte();
+  19   1        I2CSendAck(1);
+  20   1        I2CStop();
+  21   1        
+  22   1        return Dat;
+  23   1      }
+  24          
+  25          void AT24C02_WriteByte(uc Addr,Dat)
+  26          {
+  27   1        I2CStart();
+  28   1        I2CSendByte(AT24C02_ADDR|0X00);
+  29   1        I2CWaitAck();
+  30   1        I2CSendByte(Addr);
+  31   1        I2CWaitAck();
+  32   1        I2CSendByte(Dat);
+  33   1      //  I2CWaitAck();
+  34   1        I2CSendAck(1);
+  35   1        I2CStop();
+  36   1      }
+  37          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     89    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       5
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,50 @@
+C51 COMPILER V9.59.0.0   DS1302_CLCOK                                                      12/31/2022 21:20:19 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE DS1302_CLCOK
+OBJECT MODULE PLACED IN .\Objects\Ds1302_Clcok.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE BSP\src\Ds1302_Clcok.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\BSP\inc;.\TOOL\inc
+                    -) DEBUG OBJECTEXTEND PRINT(.\Listings\Ds1302_Clcok.lst) TABS(2) OBJECT(.\Objects\Ds1302_Clcok.obj)
+
+line level    source
+
+   1          #include "ds1302.h"
+   2          
+   3          /*十进制转BCD码：(BCD)=(DEC)/10*16+DEC%10*/
+   4          /*BCD码转十进制：(DEC)=(BCD)/16*10+BCD%16*/
+   5          unsigned char code Write_Address[]={0X80,0X82,0X84,0X86,0X88,0X8A,0X8C,0X8E};
+   6          unsigned char code Read_Address[]={0X81,0X83,0X85,0X87,0X89,0X8B,0X8D,0X8F};
+   7          
+   8          void Set_Time(unsigned char *Time)
+   9          {
+  10   1        unsigned char i;
+  11   1        Write_Ds1302_Byte(0X8E,~0X80 );//清除写保护位
+  12   1        for(i=0;i<7;i++)
+  13   1        {
+  14   2          Write_Ds1302_Byte(Write_Address[i],Time[i]);//写入时间
+  15   2        }
+  16   1        Write_Ds1302_Byte(0X8E,0X80 );//打开写保护
+  17   1      }
+  18          
+  19          void Read_Time(unsigned char *Time)
+  20          {
+  21   1        unsigned char i;
+  22   1        for(i=0;i<7;i++)
+  23   1        {
+  24   2          Time[i]=Read_Ds1302_Byte(Read_Address[i]);
+  25   2        }
+  26   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    115    ----
+   CONSTANT SIZE    =     16    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       8
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

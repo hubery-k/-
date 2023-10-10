@@ -1,0 +1,252 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              03/05/2023 17:10:39 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.ls
+                    -t) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "LED.h"
+   2          #include "RELAY.h"
+   3          #include "BUZZER.h"
+   4          #include "Nixie.h"
+   5          #include "KEY.h"
+   6          #include "Ds18B20.h"
+   7          #include "Timer.h"
+   8          #include "Delay.h"
+   9          
+  10          /*Ê¹ÓÃµ½µÄÓ²¼þ£ºLED¡¢¼ÌµçÆ÷¡¢ÊýÂë¹Ü¡¢¾ØÕó¼üÅÌ¡¢DS18B20ÎÂ¶È´«¸ÐÆ÷*/
+  11          unsigned char code Nodot_SMG[]={0xC0,0xF9,0xA4,0xB0,0x99,0x92,0x82,0xF8,0x80,0x90};
+  12          unsigned char code dot_SMG[]={0X40,0X79,0X24,0X30,0X19,0X12,0X02,0X78,0X00,0X10};
+  13          
+  14          unsigned char T_Int;
+  15          unsigned char T_Max=30;   //ÏµÍ³Ä¬ÈÏÉÏÏÞ30£¨×î´ó99£©
+  16          unsigned char T_Min=20;   //ÏµÍ³Ä¬ÈÏÏÂÏÞ20£¨×îÐ¡0£©
+  17          unsigned char T_Scope;    //ÎÂ¶ÈÇø¼ä£¨0~2£©
+  18          unsigned char Interface;  //ÏÔÊ¾½çÃæ
+  19          unsigned char T_Limit[4];   //¶¨ÒåÊäÈëÎÂ¶ÈãÐÖµÊý×é
+  20          unsigned char temp;
+  21          
+  22          bit L2_State;
+  23          bit L1_State;
+  24          bit RELAY_State;
+  25          
+  26          void Sys_Init(void)
+  27          {
+  28   1        LED_Close(0XFF);
+  29   1        RELAY_Close();
+  30   1        BUZZER_Close();
+  31   1        Nixie_NoDisplay();
+  32   1        P2=P2&0X1F;//Ëø´æ
+  33   1      }
+  34          
+  35          void USE_DS18B20(void)
+  36          {
+  37   1        /*ÌâÄ¿ÖÐÒªÇóÎÂ¶ÈÊý¾Ý±£´æÎªÕûÊýÊý¾Ý*/
+  38   1        /*ÇÒÎÂ¶ÈãÐÖµÉèÖÃ·¶Î§Îª0~99£¬ËùÒÔ²»ÔÙ½øÐÐÕý¸ºÎÂ¶ÈÅÐ¶Ï*/
+  39   1        DS18B20_Convert();
+  40   1        T_Int=DS18B20_ReadT();
+  41   1        
+  42   1        if(T_Int<T_Min&&T_Max>T_Min){T_Scope=0;}
+  43   1        else if(T_Int<=T_Max&&T_Int>=T_Min&&T_Max>T_Min){T_Scope=1;}
+  44   1        else if(T_Int>T_Max&&T_Max>T_Min){T_Scope=2;}
+  45   1        else if(T_Max<T_Min){T_Scope=10;}//±íÊ¾ÎÂ¶ÈÊý¾Ý³öÏÖÎÊÌâ 
+  46   1      }
+  47          
+  48          /*Ä¿Ç°Óöµ½µÄÎÊÌâ£º°Ñ¸Ã¾ØÕó°´¼üº¯Êý·ÅÔÚKEY.cÎÄ¼þÖÐ£¬´«µÝ¹ýÀ´Ê¹ÓÃÒ»´ÎºóKeyNum±äÁ¿×´Ì¬²»ÄÜÇå³ý¡£°´¼üÊ¹ÓÃµã»÷Á
+             -½´Îºó»á³öÏÖÎÊÌâ*/
+  49          void USE_MatrixKEY(void)
+  50          {
+  51   1        MatrixKey();
+  52   1      
+  53   1        if(KeyNum==10)    //ÉèÖÃ°´¼ü°´ÏÂ
+C51 COMPILER V9.59.0.0   MAIN                                                              03/05/2023 17:10:39 PAGE 2   
+
+  54   1        {
+  55   2          if(Interface==0)
+  56   2          {
+  57   3            Interface=1;    //½øÈë²ÎÊýÉèÖÃ½çÃæ
+  58   3          }   
+  59   2          else if(Interface==1)
+  60   2          {
+  61   3            if(temp!=0)
+  62   3            {
+  63   4              T_Max=T_Limit[0]*10+T_Limit[1];   //±£´æÎÂ¶ÈÊý¾Ý
+  64   4              T_Min=T_Limit[2]*10+T_Limit[3];
+  65   4              
+  66   4              temp=0;
+  67   4              T_Limit[0]=T_Limit[1]=T_Limit[2]=T_Limit[3]=0;    //±£´æÍêÎÂ¶ÈÊý¾ÝÒ²½«ÊäÈë²ÎÊýÇå³ý
+  68   4            }   
+  69   3            if(T_Max<T_Min)//ÊäÈëÎÂ¶ÈÊý¾Ý³ö´í£¬²»·µ»ØÎÂ¶ÈÏÔÊ¾½çÃæ£¬L2³£ÁÁ
+  70   3            {
+  71   4              Interface=1;  
+  72   4              L2_State=1;
+  73   4              L1_State=0;         
+  74   4            }
+  75   3            else    //·µ»ØÎÂ¶ÈÏÔÊ¾½çÃæ
+  76   3            {
+  77   4              Interface=0;
+  78   4              L2_State=0;
+  79   4            }   
+  80   3          }   
+  81   2          KeyNum=20;    //Ã»ÓÐ¼üÖµ¶ÔÓ¦20£¬´Ë´¦ÊÇÎªÁËÇå³ý°´¼ü°´ÏÂ×´Ì¬
+  82   2        }
+  83   1        
+  84   1        if(Interface==1)    //ÔÚ²ÎÊýÉèÖÃ½çÃæÏÂ
+  85   1        {
+  86   2          if(KeyNum<10)   
+  87   2          {
+  88   3            if(temp<4)
+  89   3            {
+  90   4              T_Limit[temp++]=KeyNum;   //ÊäÈëÎÂ¶ÈÉÏÏÂÏÞ
+  91   4            }
+  92   3            KeyNum=20;
+  93   3          }
+  94   2          
+  95   2          if(KeyNum==11)    //Çå³ý°´¼ü°´ÏÂ
+  96   2          {
+  97   3            T_Limit[0]=T_Limit[1]=T_Limit[2]=T_Limit[3]=0;
+  98   3            temp=0;
+  99   3            KeyNum=20;
+ 100   3          }
+ 101   2        }
+ 102   1      }
+ 103          
+ 104          void USE_SMG(void)
+ 105          {
+ 106   1        if(Interface==0)
+ 107   1        {
+ 108   2          Nixie_Display(0,0XBF);
+ 109   2          Nixie_Display(1,Nodot_SMG[T_Scope]);
+ 110   2          Nixie_Display(2,0XBF);
+ 111   2          
+ 112   2          Nixie_Display(6,Nodot_SMG[T_Int/10]);
+ 113   2          Nixie_Display(7,Nodot_SMG[T_Int%10]);
+ 114   2        }
+ 115   1        else if(Interface==1)
+C51 COMPILER V9.59.0.0   MAIN                                                              03/05/2023 17:10:39 PAGE 3   
+
+ 116   1        {
+ 117   2          Nixie_Display(0,0XBF);
+ 118   2          Nixie_Display(5,0XBF);
+ 119   2          if(temp==1)
+ 120   2          {
+ 121   3            Nixie_Display(1,Nodot_SMG[T_Limit[0]]);
+ 122   3          }
+ 123   2          else if(temp==2)
+ 124   2          {
+ 125   3            Nixie_Display(1,Nodot_SMG[T_Limit[0]]);
+ 126   3            Nixie_Display(2,Nodot_SMG[T_Limit[1]]);
+ 127   3          }
+ 128   2          else if(temp==3)
+ 129   2          {
+ 130   3            Nixie_Display(1,Nodot_SMG[T_Limit[0]]);
+ 131   3            Nixie_Display(2,Nodot_SMG[T_Limit[1]]);
+ 132   3            Nixie_Display(6,Nodot_SMG[T_Limit[2]]);
+ 133   3          }
+ 134   2          else if(temp==4)
+ 135   2          {
+ 136   3            Nixie_Display(1,Nodot_SMG[T_Limit[0]]);
+ 137   3            Nixie_Display(2,Nodot_SMG[T_Limit[1]]);
+ 138   3            Nixie_Display(6,Nodot_SMG[T_Limit[2]]);
+ 139   3            Nixie_Display(7,Nodot_SMG[T_Limit[3]]);
+ 140   3          }
+ 141   2          else if(temp==0)
+ 142   2          {
+ 143   3            Nixie_Display(1,0XFF);
+ 144   3            Nixie_Display(2,0XFF);
+ 145   3            Nixie_Display(6,0XFF);
+ 146   3            Nixie_Display(7,0XFF);
+ 147   3          }
+ 148   2        }
+ 149   1        
+ 150   1        Nixie_All();    //·ÀÖ¹SMG×îºóÒ»Î»¹ýÓÚÁÁ
+ 151   1      }
+ 152          
+ 153          void USE_LED(void)
+ 154          {
+ 155   1        if(L2_State==1){LED_Open(0X02);}
+ 156   1        else{LED_Close(0X02);}
+ 157   1        
+ 158   1        if(L1_State==1){LED_Open(0X01);}
+ 159   1        else{LED_Close(0X01);}
+ 160   1      }
+ 161          
+ 162          void USE_RELAY(void)
+ 163          {
+ 164   1        if(RELAY_State==1){RELAY_Open();}
+ 165   1        else{RELAY_Close();}
+ 166   1      }
+ 167          
+ 168          /*¶¨Ê±Æ÷0ÖÐ¶Ïº¯Êý£¨10ms½øÒ»´ÎÖÐ¶Ï£©*/
+ 169          void Timer0_Routine(void) interrupt 1
+ 170          {
+ 171   1        static unsigned char count;
+ 172   1        
+ 173   1        if(T_Scope==0)
+ 174   1        {
+ 175   2          count++;
+ 176   2          if(count==80)
+ 177   2          {
+C51 COMPILER V9.59.0.0   MAIN                                                              03/05/2023 17:10:39 PAGE 4   
+
+ 178   3            count=0;
+ 179   3            RELAY_State=0;
+ 180   3            L1_State=~L1_State;
+ 181   3          }
+ 182   2        }
+ 183   1        else if(T_Scope==1)
+ 184   1        {
+ 185   2          count++;
+ 186   2          if(count==40)
+ 187   2          {
+ 188   3            count=0;
+ 189   3            RELAY_State=0;
+ 190   3            L1_State=~L1_State;
+ 191   3          }
+ 192   2        }
+ 193   1        else if(T_Scope==2)
+ 194   1        {
+ 195   2          count++;
+ 196   2          if(count==20)
+ 197   2          {
+ 198   3            count=0;
+ 199   3            RELAY_State=1;
+ 200   3            L1_State=~L1_State;
+ 201   3          }
+ 202   2        }
+ 203   1      }
+ 204          
+ 205          void main(void)
+ 206          {
+ 207   1        Sys_Init();
+ 208   1        Timer0Init();
+ 209   1        DS18B20_Convert();//ÉÏµçµÚÒ»´ÎÏÈ×ª»»Ò»´ÎÊý¾Ý£¬·ÀÖ¹Ò»ÉÏµçÊýÂë¹Ü²»ÄÜÁ¢ÂíÏÔÊ¾Õý³£µÄÎÂ¶ÈÊý¾Ý
+ 210   1        Delay1000ms();//µÈ´ýÎÂ¶È×ª»»Íê³ÉÔÙÉÏµçÏÔÊ¾
+ 211   1        while(1)
+ 212   1        {
+ 213   2          USE_DS18B20();
+ 214   2          USE_SMG();
+ 215   2          USE_MatrixKEY();
+ 216   2          USE_LED();
+ 217   2          USE_RELAY();
+ 218   2          if(L1_State==1){LED_Open(0X01);}
+ 219   2          else{LED_Close(0X01);}
+ 220   2        }
+ 221   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    658    ----
+   CONSTANT SIZE    =     20    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     11    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      3    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

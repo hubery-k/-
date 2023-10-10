@@ -1,0 +1,327 @@
+C51 COMPILER V9.56.0.0   MAINN                                                             03/25/2018 20:02:44 PAGE 1   
+
+
+C51 COMPILER V9.56.0.0, COMPILATION OF MODULE MAINN
+OBJECT MODULE PLACED IN mainn.OBJ
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE mainn.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          /*
+   2           * ÎÊÌâÃèÊö£º¼ÇÂ¼ÎÂ¶ÈÓ¦¸ÃÓÐÊ®¸ö£¬µ«ÊÇÖ»ÄÜ¼ÇÂ¼Ç°Á½¸ö
+   3           * ½â¾ö·½°¸£ºµÚ126ÐÐµÄÊý×é¶¨ÒåÎÊÌâ£¬u8 temperature[2];Ó¦¸Ã¶¨Òå³Éu8 temperature[10]; ÒòÎªÒª¼ÇÂ¼10¸öÎÂ¶È¡£
+   4           * Copyright (c) 2018 µç×ÓÉè¼Æ¹¤·» dianshe.taobao.com
+   5           * All rights reserved
+   6           */
+   7          #include "STC15F2K60S2.h"
+   8          #include<DS1302.h>                      
+   9          #include<onewire.h>
+  10          #include<intrins.h>
+  11          
+  12          void Delay100ms()               //@11.0592MHz
+  13          {
+  14   1              unsigned char i, j, k;
+  15   1      
+  16   1              _nop_();
+  17   1              _nop_();
+  18   1              i = 5;
+  19   1              j = 52;
+  20   1              k = 195;
+  21   1              do
+  22   1              {
+  23   2                      do
+  24   2                      {
+  25   3                              while (--k);
+  26   3                      } while (--j);
+  27   2              } while (--i);
+  28   1      }
+  29          #define u8 unsigned char
+  30          u8 code smg_du[]={0x3F,0x06,0x5B,0x4F,0x66,0x6D,0x7D,0x07,0x7F,0x6F};
+  31          u8 code smg_wei[]={0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80}; 
+  32          
+  33          #define KEY P3
+  34          #define NO_KEY   0xff//ÎÞ°´¼ü°´ÏÂ
+  35          #define key_state_0 0//ÅÐ¶Ï°´¼ü°´ÏÂ
+  36          #define key_state_1 1//¶¶¶¯
+  37          #define key_state_2 2//ÊÍ·Å  µ¯Æð
+  38          unsigned char Key_Scan()
+  39          {
+  40   1        u8 key_value=0,key_temp;
+  41   1        static u8 key_state;
+  42   1        u8 key1,key2;
+  43   1      
+  44   1        P30=0;P31=0;P32=0;P33=0;P34=1;P35=1;P42=1;P44=1;
+  45   1        if(P44==0) key1=0x70;
+  46   1        if(P42==0) key1=0xb0;
+  47   1        if(P35==0) key1=0xd0;
+  48   1        if(P34==0) key1=0xe0;
+  49   1        if((P34==1)&&(P35==1)&&(P42==1)&&(P44==1)) key1=0xf0;
+  50   1      
+  51   1        P30=1;P31=1;P32=1;P33=1;P34=0;P35=0;P42=0;P44=0;
+  52   1        if(P30==0) key2=0x0e;
+  53   1        if(P31==0) key2=0x0d;
+  54   1        if(P32==0) key2=0x0b;
+  55   1        if(P33==0) key2=0x07;
+C51 COMPILER V9.56.0.0   MAINN                                                             03/25/2018 20:02:44 PAGE 2   
+
+  56   1        if((P30==1)&&(P31==1)&&(P32==1)&&(P33==1)) key2=0x0f;
+  57   1        key_temp=key1|key2;
+  58   1      
+  59   1        switch(key_state)
+  60   1        {
+  61   2          case key_state_0:
+  62   2              if(key_temp!=NO_KEY)
+  63   2                key_state=key_state_1;
+  64   2                break;
+  65   2               
+  66   2               case key_state_1:
+  67   2               if(key_state==NO_KEY)
+  68   2               key_state=key_state_0;
+  69   2               else
+  70   2               {
+  71   3                 switch(key_temp)
+  72   3                 {
+  73   4                  case 0x77:key_value=4;break;
+  74   4                      case 0x7b:key_value=5;break;
+  75   4                      case 0x7d:key_value=6;break;
+  76   4                      case 0x7e:key_value=7;break;
+  77   4      
+  78   4                      case 0xb7:key_value=8;break;
+  79   4                      case 0xbb:key_value=9;break;
+  80   4                      case 0xbd:key_value=10;break;
+  81   4                      case 0xbe:key_value=11;break;
+  82   4      
+  83   4                      case 0xd7:key_value=12;break;
+  84   4                      case 0xdb:key_value=13;break;
+  85   4                      case 0xdd:key_value=14;break;
+  86   4                      case 0xde:key_value=15;break;
+  87   4      
+  88   4                      case 0xe7:key_value=16;break;
+  89   4                      case 0xeb:key_value=17;break;
+  90   4                      case 0xed:key_value=18;break;
+  91   4                      case 0xee:key_value=19;break;
+  92   4                 }
+  93   3                  key_state=key_state_2;
+  94   3               }
+  95   2                break;
+  96   2           
+  97   2                case key_state_2:
+  98   2                if(key_temp==NO_KEY)
+  99   2                key_state=key_state_0;
+ 100   2                break;
+ 101   2        }
+ 102   1        return key_value;
+ 103   1      }
+ 104          void Timer_Init(void)
+ 105          {
+ 106   1              AUXR |= 0x80;   
+ 107   1              TMOD &= 0xF0;
+ 108   1              TL0 = 0xCD;             
+ 109   1              TH0 = 0xD4;             
+ 110   1              TF0 = 0;                
+ 111   1              TR0 = 1;                
+ 112   1              ET0 = 1;
+ 113   1              EA=1; 
+ 114   1      }
+ 115          
+ 116          
+ 117          u8 menu1[8],menu3[8];
+C51 COMPILER V9.56.0.0   MAINN                                                             03/25/2018 20:02:44 PAGE 3   
+
+ 118          u8 sample_time[]={1,5,30,60}; 
+ 119          u8 sample_index;                          //ÇÐ»»µÄËÄ¸öÎÂ¶ÈË÷Òý
+ 120          u8 shi,fen,miao;
+ 121          u8 menu_index;
+ 122          u8 shijian[8];
+ 123          u8 real_sample_time;
+ 124          u8 display_count;
+ 125          
+ 126          u8 temperature[10];
+ 127          bit led_blink_flag;
+ 128          bit key_flag;
+ 129          bit temp_flag;
+ 130          void main()
+ 131          {
+ 132   1           u8 sample_countcount;
+ 133   1          //count = 0;                      //initial counter
+ 134   1              u8 key_val=NO_KEY;
+ 135   1              P2=0xa0;P0=0;P2=0;// close buzzer and relay
+ 136   1              P2=0x80;P0=0xff;P2=0;//close led
+ 137   1              set_sfm(23,59,55);
+ 138   1              Timer_Init();
+ 139   1      
+ 140   1              while(1)
+ 141   1              {
+ 142   2                miao=Read_Ds1302(0x81);
+ 143   2                fen=Read_Ds1302(0x83);
+ 144   2                shi=Read_Ds1302(0x85);
+ 145   2      
+ 146   2                shijian[0]=smg_du[shi/16];
+ 147   2                shijian[1]=smg_du[shi%16];
+ 148   2                shijian[3]=smg_du[fen/16];
+ 149   2                shijian[4]=smg_du[fen%16];
+ 150   2                shijian[6]=smg_du[miao/16];
+ 151   2                shijian[7]=smg_du[miao%16];
+ 152   2      
+ 153   2                menu1[0]=0x00;menu1[1]=0x00;menu1[2]=0x00;menu1[3]=0x00;menu1[4]=0x00;menu1[5]=0x40;
+ 154   2                menu1[6]=smg_du[sample_time[sample_index]/10];menu1[7]=smg_du[sample_time[sample_index]%10];
+ 155   2      
+ 156   2                        if(key_flag)
+ 157   2                        {
+ 158   3                          key_flag=0;
+ 159   3                              key_val=Key_Scan();
+ 160   3                              switch(key_val)
+ 161   3                              {
+ 162   4                                case 4:
+ 163   4                                       if(menu_index==0)
+ 164   4                                               {
+ 165   5                                                 sample_index++;
+ 166   5                                                 if(sample_index==4)
+ 167   5                                                  sample_index=0;
+ 168   5                                               }
+ 169   4                                       break;
+ 170   4                                case 5:
+ 171   4                                               if(menu_index==0)
+ 172   4                                               {
+ 173   5                                                  menu_index=1;  //½øÈëÊ±¼äÏÔÊ¾½çÃæ
+ 174   5                                                      real_sample_time=sample_time[sample_index];      //  ½øÈëÖÐ¶Ï,Âú×ã¿ªÆô²É¼¯ÎÂ¶ÈµÄÊ±¼ä-->»Øµ½while £¬Ö´ÐÐÎ
+             -Â¶È²É¼¯--> È·¶¨²ÉÑù¼ä¸ô
+ 175   5                                               }
+ 176   4                                       break;
+ 177   4                                case 6:
+ 178   4                                       led_blink_flag=0;
+C51 COMPILER V9.56.0.0   MAINN                                                             03/25/2018 20:02:44 PAGE 4   
+
+ 179   4                                               P2=0x80;P0=0xff;P2=0x00;
+ 180   4                                               display_count++;
+ 181   4                                               if(display_count==10)
+ 182   4                                               display_count=0;
+ 183   4                                       break;
+ 184   4                                case 7:
+ 185   4                                               menu_index=0;
+ 186   4                                               sample_countcount=0;
+ 187   4                                       break;
+ 188   4                                case 8:break;
+ 189   4                              }
+ 190   3                        }
+ 191   2                 if(temp_flag)
+ 192   2                 {
+ 193   3                    temp_flag=0;
+ 194   3                        
+ 195   3                        if(sample_countcount<10)
+ 196   3                        {
+ 197   4                           ET0=0;
+ 198   4                           temperature[sample_countcount]= (u8)rd_temperature_f();
+ 199   4                               ET0=1;
+ 200   4                               sample_countcount++;
+ 201   4                        }
+ 202   3                        else
+ 203   3                        {      
+ 204   4                    
+ 205   4                                menu_index=2;
+ 206   4                                led_blink_flag=1;
+ 207   4                        }
+ 208   3                 }
+ 209   2                 if(menu_index==2)
+ 210   2                 {
+ 211   3                    menu3[0]=0x40;
+ 212   3                        menu3[1]=smg_du[display_count/10];
+ 213   3                        menu3[2]=smg_du[display_count%10];            //
+ 214   3                        menu3[3]=0x00;menu3[4]=0x00;menu3[5]=0x40;
+ 215   3                        menu3[6]=smg_du[temperature[display_count]/10];
+ 216   3                        menu3[7]=smg_du[temperature[display_count]%10];
+ 217   3                 }
+ 218   2              }                                                       
+ 219   1      }
+ 220          bit blink_flag;
+ 221          
+ 222          void tm0_isr() interrupt 1 using 1
+ 223          {
+ 224   1           static int i=0 ,key_count=0,smg_count=0,blink_count=0,sample_count=0;
+ 225   1              key_count++;smg_count++;blink_count++;
+ 226   1              if(key_count==10)       //10ms
+ 227   1              {
+ 228   2                key_count=0;
+ 229   2                key_flag=1;
+ 230   2              }
+ 231   1              if(smg_count==3)                  //3ms
+ 232   1              {
+ 233   2                smg_count=0;
+ 234   2                P2=0xc0;P0=0;P2=0;//ÏûÓ°
+ 235   2      
+ 236   2                if(menu_index==0)
+ 237   2                {
+ 238   3                   P2=0xe0;P0=~menu1[i];P2=0;
+ 239   3                }
+ 240   2                if(menu_index==1)     //Ê±¼äÏÔÊ¾½çÃæ
+C51 COMPILER V9.56.0.0   MAINN                                                             03/25/2018 20:02:44 PAGE 5   
+
+ 241   2                {
+ 242   3                    P2=0xe0;P0=~shijian[i];P2=0;
+ 243   3                }
+ 244   2                if(menu_index==2)
+ 245   2                {
+ 246   3                   P2=0xe0;P0=~menu3[i];P2=0;
+ 247   3                }
+ 248   2                P2=0xc0;P0=smg_wei[i];P2=0;
+ 249   2                i++;
+ 250   2                if(i==8)  i=0;
+ 251   2              }
+ 252   1      
+ 253   1              if(blink_count==1000)//1s
+ 254   1              {
+ 255   2                 blink_count=0;
+ 256   2                 blink_flag=~blink_flag;
+ 257   2                 if(blink_flag)
+ 258   2                 {
+ 259   3                    shijian[2]=0x40;
+ 260   3                        shijian[5]=0x40;
+ 261   3                 }
+ 262   2                 else
+ 263   2                 {
+ 264   3                    shijian[2]=0x00;
+ 265   3                        shijian[5]=0x00;
+ 266   3                 }
+ 267   2      
+ 268   2                 if(led_blink_flag)
+ 269   2                 {
+ 270   3                    if(blink_flag)
+ 271   3                        {
+ 272   4                          P2=0x80;P0=~0x01;P2=0;
+ 273   4                        }
+ 274   3                        else
+ 275   3                        {
+ 276   4                          P2=0x80;P0=0xff;P2=0;
+ 277   4                        }
+ 278   3                 }
+ 279   2              }
+ 280   1      
+ 281   1              if(menu_index==1)
+ 282   1              {
+ 283   2                sample_count++;
+ 284   2                if(sample_count==real_sample_time*1000)
+ 285   2                {
+ 286   3                   sample_count=0;  
+ 287   3                       temp_flag=1;
+ 288   3                }
+ 289   2              }
+ 290   1      }
+ 291          
+ 292          
+ 293          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    957    ----
+   CONSTANT SIZE    =     18    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     56       6
+   IDATA SIZE       =   ----    ----
+C51 COMPILER V9.56.0.0   MAINN                                                             03/25/2018 20:02:44 PAGE 6   
+
+   BIT SIZE         =      4    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

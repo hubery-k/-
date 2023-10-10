@@ -1,0 +1,44 @@
+C51 COMPILER V9.59.0.0   KEY                                                               03/19/2023 16:09:52 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\KEY.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE KEY.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\KEY.lst)
+                    - TABS(2) OBJECT(.\Objects\KEY.obj)
+
+line level    source
+
+   1          #include "KEY.h"
+   2          
+   3          unsigned char Trg,Cont;
+   4          
+   5          void KEY()
+   6          {
+   7   1        unsigned char dat;
+   8   1        dat=P3^0XFF;
+   9   1        Trg=dat&(dat^Cont);
+  10   1        Cont=dat;
+  11   1      }
+  12          
+  13          /*ÈýÐÐ´úÂë½âÊÍ£º
+  14            £¨1£©Ã»ÓÐ°´¼ü°´ÏÂ£ºdat=0;Cont=0;Trg=0;
+  15            £¨2£©µ±S7°´¼ü°´ÏÂ£ºKEYPORT=0XFE;dat=0X01;Trg=0X01&(0X01^0X01)=0X01;Cont=0X01;
+  16            £¨3£©µ±S7°´¼ü³ÖÐø°´ÏÂ£ºTrgÔÚµÚÒ»¸öÉ¨ÃèÖÜÆÚµÈÓÚ0XFE£¬ÔÚµÚ¶þ¸öÉ¨ÃèÖÜÆÚºóTrg=0±ä»ØÁËÔ­×´Ì¬(ÎªÁË°´ÏÂ²»¶à´Î´¥·
+             -¢);
+  17                  Cont=0X01Cont×´Ì¬Ã»ÓÐÏû³ý±íÊ¾°´¼ü³ÖÐø°´ÏÂ¡£
+  18            £¨4£©µ±S7°´¼üËÉ¿ª£ºTrg=0X00(0X00^0X01)=0;Cont=0;
+  19          */
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     12    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      2    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

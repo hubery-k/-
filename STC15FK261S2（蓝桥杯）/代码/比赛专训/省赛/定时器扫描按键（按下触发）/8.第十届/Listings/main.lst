@@ -1,0 +1,235 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              04/07/2023 23:11:00 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.ls
+                    -t) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "LED.h"
+   2          #include "RB.h"
+   3          #include "Nixie.h"
+   4          #include "KEY.h"
+   5          #include "Timer.h"
+   6          #include "PCF8591.h"
+   7          
+   8          uc code Nodot_SMG[]={~0x3F,~0x06,~0x5B,~0x4F,~0x66,~0x6D,~0x7D,~0x07,~0x7F,~0x6F,~0x77,~0x7C,~0x39,~0x5E,~
+             -0x79,~0x71};
+   9          uc code dot_SMG[]={~0xBF,~0x86,~0xDB,~0xCF,~0xE6,~0xED,~0xFD,~0x87,~0xFF,~0xEF,~0xF7,~0xFC,~0xB9,~0xDE,~0x
+             -F9,~0xF1};
+  10          
+  11          uc KeyNum;    //按键键值
+  12          f adc_value;    //收集到的AD电压值
+  13          ui smg_adc;   //收集到的AD电压值（用于数码管显示）
+  14          uli F_temp;   //（NE555）收集频率临时变量
+  15          uli F;    //（NE555）频率变量
+  16          bit Interface;    //显示界面
+  17          bit LED_Enable;   //LED功能启用、禁用（0-启用 1-禁用）
+  18          bit SMG_Enable;   //数码管功能启用、禁用（0-启用 1-禁用）
+  19          bit AD_Flag;    //AD间隔采集标志
+  20          bit DA_Flag;    //DA模式切换标志
+  21          bit Save_Flag;
+  22          void Sys_Init()
+  23          {
+  24   1        LED_Control(0X00);    //关闭所有LED
+  25   1        RB_Control(0X00);
+  26   1      }
+  27          
+  28          void USE_PCF8591()
+  29          {
+  30   1        /*AD读取功能*/
+  31   1        if(AD_Flag==1)    
+  32   1        {
+  33   2          AD_Flag=0;
+  34   2          adc_value=AD_Read()*(5.0/255);
+  35   2          smg_adc=adc_value*100;
+  36   2        }
+  37   1        
+  38   1        /*DA写入功能*/
+  39   1        if(DA_Flag==0)
+  40   1        {
+  41   2          DA_Write(2/5.0*255);
+  42   2        }
+  43   1        else if(DA_Flag==1)
+  44   1        {
+  45   2          DA_Write(adc_value/5.0*255);
+  46   2        }
+  47   1      }
+  48          
+  49          void USE_KEY()
+  50          {
+  51   1        KeyNum=KEY();
+  52   1        if(KeyNum==4)   //S4-显示界面切换按键
+C51 COMPILER V9.59.0.0   MAIN                                                              04/07/2023 23:11:00 PAGE 2   
+
+  53   1        {
+  54   2          Interface=~Interface;
+  55   2        }
+  56   1        if(KeyNum==5)   //S5-DAC输出模式切换
+  57   1        {
+  58   2          DA_Flag=~DA_Flag;
+  59   2        }
+  60   1        if(KeyNum==6)   //S6-LED功能启用、禁用按键
+  61   1        {
+  62   2          LED_Enable=~LED_Enable;
+  63   2        }
+  64   1        if(KeyNum==7)   //S7-数码管功能启用、禁用按键
+  65   1        {
+  66   2          SMG_Enable=~SMG_Enable;
+  67   2        }
+  68   1      }
+  69          
+  70          void USE_LED()
+  71          {
+  72   1        /*1-熄灭，0点亮*/
+  73   1        if(LED_Enable==0)
+  74   1        {
+  75   2          LED_Init();
+  76   2          if(Interface==0){L1=0;L2=1;}
+  77   2          else if(Interface==1){L1=1;L2=0;}
+  78   2          
+  79   2          if(adc_value<1.5){L3=1;}
+  80   2          else if(adc_value>=1.5 && adc_value<2.5){L3=0;}
+  81   2          else if(adc_value>=2.5 && adc_value<3.5){L3=1;}
+  82   2          else if(adc_value>=3.5){L3=0;}
+  83   2          
+  84   2          if(F<1000){L4=1;}
+  85   2          else if(F>=1000 && F<5000){L4=0;}
+  86   2          else if(F>=5000 && F<10000){L4=1;}
+  87   2          else if(F>=10000){L4=0;}
+  88   2          
+  89   2          if(DA_Flag==0){L5=1;}
+  90   2          else if(DA_Flag==1){L5=0;}
+  91   2          
+  92   2          P2&=0X1F;
+  93   2        }
+  94   1        else if(LED_Enable==1)
+  95   1        {
+  96   2          LED_Control(0X00);
+  97   2        }
+  98   1      }
+  99          
+ 100          void USE_SMG()
+ 101          {
+ 102   1        if(SMG_Enable==0)
+ 103   1        {
+ 104   2          if(Interface==0)
+ 105   2          {
+ 106   3            Nixie_SetBuf(0,0XC1);   //标识符-U
+ 107   3            Nixie_SetBuf(1,0XFF);
+ 108   3            Nixie_SetBuf(2,0XFF);
+ 109   3            Nixie_SetBuf(3,0XFF);
+ 110   3            Nixie_SetBuf(4,0XFF);
+ 111   3            Nixie_SetBuf(5,dot_SMG[smg_adc/100]);
+ 112   3            Nixie_SetBuf(6,Nodot_SMG[smg_adc/10%10]);
+ 113   3            Nixie_SetBuf(7,Nodot_SMG[smg_adc%10]);
+ 114   3          }
+C51 COMPILER V9.59.0.0   MAIN                                                              04/07/2023 23:11:00 PAGE 3   
+
+ 115   2          else if(Interface==1)
+ 116   2          {
+ 117   3            Nixie_SetBuf(0,Nodot_SMG[15]);    //标识符-F
+ 118   3            Nixie_SetBuf(1,0XFF);
+ 119   3            
+ 120   3            if(F>99999){Nixie_SetBuf(2,Nodot_SMG[F/100000]);}
+ 121   3            else{Nixie_SetBuf(2,0XFF);}
+ 122   3            if(F>9999){Nixie_SetBuf(3,Nodot_SMG[F/10000%10]);}
+ 123   3            else{Nixie_SetBuf(3,0XFF);}
+ 124   3            if(F>999){Nixie_SetBuf(4,Nodot_SMG[F/1000%10]);}
+ 125   3            else{Nixie_SetBuf(4,0XFF);}
+ 126   3            if(F>99){Nixie_SetBuf(5,Nodot_SMG[F/100%10]);}
+ 127   3            else{Nixie_SetBuf(5,0XFF);}
+ 128   3            if(F>9){Nixie_SetBuf(6,Nodot_SMG[F/10%10]);}
+ 129   3            else{Nixie_SetBuf(6,0XFF);}
+ 130   3            Nixie_SetBuf(7,Nodot_SMG[F%10]);
+ 131   3          }
+ 132   2        }
+ 133   1        else if(SMG_Enable==1)
+ 134   1        {
+ 135   2          Nixie_SetBuf(0,0XFF);
+ 136   2          Nixie_SetBuf(1,0XFF);
+ 137   2          Nixie_SetBuf(2,0XFF);
+ 138   2          Nixie_SetBuf(3,0XFF);
+ 139   2          Nixie_SetBuf(4,0XFF);
+ 140   2          Nixie_SetBuf(5,0XFF);
+ 141   2          Nixie_SetBuf(6,0XFF);
+ 142   2          Nixie_SetBuf(7,0XFF);
+ 143   2        }
+ 144   1      
+ 145   1      }
+ 146          
+ 147          /*外部脉冲计数模式的定时函数*/
+ 148          void Timer0_Routine(void) interrupt 1
+ 149          {
+ 150   1        F_temp++;
+ 151   1      }
+ 152          
+ 153          /*1ms的定时中断函数*/
+ 154          void Timer1_Routine(void) interrupt 3
+ 155          {
+ 156   1        static uc T1_Count1;    //数码管扫描显示
+ 157   1        static uc T1_Count2;    //按键扫描消抖
+ 158   1        static ui F_Count;
+ 159   1        static uc AD_Count;
+ 160   1        
+ 161   1        T1_Count1++;T1_Count2++;
+ 162   1        if(T1_Count1==2)
+ 163   1        {
+ 164   2          T1_Count1=0;
+ 165   2          Nixie_Loop();
+ 166   2        }
+ 167   1        if(T1_Count2==10)
+ 168   1        {
+ 169   2          T1_Count2=0;
+ 170   2          Key_Loop();
+ 171   2        }
+ 172   1        
+ 173   1        AD_Count++;
+ 174   1        if(AD_Count==50)
+ 175   1        {
+ 176   2          AD_Count=0;
+C51 COMPILER V9.59.0.0   MAIN                                                              04/07/2023 23:11:00 PAGE 4   
+
+ 177   2          AD_Flag=1;
+ 178   2        }
+ 179   1        
+ 180   1        F_Count++;
+ 181   1        if(F_Count==1000)
+ 182   1        {
+ 183   2          F_Count=0;
+ 184   2          F=F_temp;
+ 185   2          F_temp=0;
+ 186   2        }
+ 187   1      }
+ 188          
+ 189          void main(void)
+ 190          {
+ 191   1        Sys_Init();
+ 192   1        Timer0Init();
+ 193   1        Timer1Init();
+ 194   1        while(1)
+ 195   1        {
+ 196   2          EA=0;
+ 197   2          USE_LED();
+ 198   2          EA=1;
+ 199   2          USE_PCF8591();
+ 200   2          USE_KEY();
+ 201   2          USE_SMG();
+ 202   2        }
+ 203   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1292    ----
+   CONSTANT SIZE    =     32    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     20    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      6    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,21 @@
+<html>
+<body>
+<pre>
+<h1>礦ision Build Log</h1>
+<h2>Project:</h2>
+C:\Users\Kengcc\Desktop\蓝桥杯答疑汇总\1.第七届省赛_键盘问题_20180322\解决方案\第七届模拟\mngg.uvproj
+Project File Date:  03/22/2018
+
+<h2>Output:</h2>
+Build target 'Target 1'
+compiling main.c...
+linking...
+Program Size: data=51.3 xdata=0 code=1786
+creating hex file from ".\Objects\mngg"...
+".\Objects\mngg" - 0 Error(s), 0 Warning(s).
+Build target 'Target 1'
+compiling main.c...
+linking...
+Program Size: data=55.3 xdata=0 code=1916
+creating hex file from ".\Objects\mngg"...
+".\Objects\mngg" - 0 Error(s), 0 Warning(s).

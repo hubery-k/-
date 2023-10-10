@@ -1,0 +1,55 @@
+C51 COMPILER V9.00   MAIN                                                                  11/15/2013 20:24:45 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\output\main.obj
+COMPILER INVOKED BY: D:\Program Files\Keil\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND PRINT(.\list\main.lst) OBJEC
+                    -T(.\output\main.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          #include "pcf8591.h"
+   3          #include "math.h"
+   4          
+   5          unsigned char idata table[128];
+   6          
+   7          void main(void)
+   8          {
+   9   1      
+  10   1        unsigned char i = 0;
+  11   1      
+  12   1        for(i=0;i<128;i++)
+  13   1        {
+  14   2              table[i] = 127*sin(2.0*3.1415/256.0*i*2)+128;  
+  15   2        }
+  16   1       
+  17   1        iic_start();
+  18   1        iic_sendbyte(0x90);
+  19   1        iic_waitack();
+  20   1        iic_sendbyte(0x40); //选择DAC功能
+  21   1        iic_waitack();
+  22   1      
+  23   1        while(1)
+  24   1        {
+  25   2          for(i=0;i<128;i++)
+  26   2              {
+  27   3                iic_sendbyte(table[i]); //通过PCF8591输出正弦波
+  28   3                iic_waitack();
+  29   3              }
+  30   2        }
+  31   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    109    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       1
+   IDATA SIZE       =    128    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

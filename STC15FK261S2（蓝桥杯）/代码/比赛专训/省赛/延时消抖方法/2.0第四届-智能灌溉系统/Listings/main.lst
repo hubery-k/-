@@ -1,0 +1,237 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              02/26/2023 21:51:21 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.ls
+                    -t) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "LED.h"
+   2          #include "RELAY.h"
+   3          #include "BUZZER.h"
+   4          #include "Nixie.h"
+   5          #include "AD.h"
+   6          #include "Clock.h"
+   7          #include "EEPROM.h"
+   8          #include "KEY.h"
+   9          #include "Delay.h"
+  10          
+  11          /*本程序使用硬件：LED、蜂鸣器、继电器、数码管、AD(PCF8591)、EEPROM(AT24C02)、按键、DS1302时钟*/
+  12          
+  13          
+  14          unsigned char code Nodot_duanma[]={0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0x88,0x83,0xc6,0xa1,0
+             -x86,0x8e};
+  15          unsigned char code dot_duanma[]={0x40,0x79,0x24,0x30,0x19,0x12,0x02,0x78,0x00,0x10,0x08,0x03,0x46,0x21,0x0
+             -6,0x0e};
+  16          
+  17          /*BCD码的好处在时间上对比16进制看起来很直观（8时30分0秒）*/
+  18          /*设置时间的数组不能加上code放入ROM中，因为读取的时间是一直更改的。放入ROM(程序存储区)中的数据将不能被更改
+             -*/
+  19          unsigned char Time[]={0X00,0X30,0X08};
+  20          
+  21          
+  22          float adc_vol;
+  23          unsigned char humidity;
+  24          unsigned char Hum_Limit=50;//湿度阈值初始为50%
+  25          unsigned char Red_HumLimit;
+  26          //unsigned int smg_vol;
+  27          bit Wor_State;
+  28          bit Buz_State;
+  29          bit Rel_State;
+  30          bit S6_State;
+  31          bit Buz_flag;
+  32          void Sys_Init(void)
+  33          {
+  34   1        RELAY_Close();
+  35   1        BUZZER_Close();
+  36   1        LED_Close();
+  37   1        Nixie_NoDisplay();
+  38   1        P2=(P2&0x1F)|0X00;//所有外设都不选中
+  39   1      }
+  40          
+  41          void USE_SMG(void)
+  42          {
+  43   1        //初始显示状态
+  44   1        if(S6_State==0)
+  45   1        {
+  46   2          Nixie_Display(0,Nodot_duanma[Time[2]/16]);
+  47   2          Nixie_Display(1,Nodot_duanma[Time[2]%16]);
+  48   2          Nixie_Display(2,0xBF);
+  49   2          Nixie_Display(3,Nodot_duanma[Time[1]/16]);
+  50   2          Nixie_Display(4,Nodot_duanma[Time[1]%16]);
+  51   2          
+C51 COMPILER V9.59.0.0   MAIN                                                              02/26/2023 21:51:21 PAGE 2   
+
+  52   2          Nixie_Display(6,Nodot_duanma[humidity/10]);
+  53   2          Nixie_Display(7,Nodot_duanma[humidity%10]);
+  54   2          
+  55   2        }
+  56   1        
+  57   1        
+  58   1        //湿度阈值调整界面（自动工作模式下）
+  59   1        if(S6_State==1)
+  60   1        {
+  61   2          Nixie_Display(0,0xBF);
+  62   2          Nixie_Display(1,0xBF);
+  63   2          Nixie_Display(6,Nodot_duanma[Hum_Limit/10]);
+  64   2          Nixie_Display(7,Nodot_duanma[Hum_Limit%10]);
+  65   2        }
+  66   1      }
+  67          
+  68          void USE_AD(void)
+  69          {
+  70   1        adc_vol=AD_Read()*(5.0/255);//转换为0-5V电压值
+  71   1        humidity=(adc_vol/5.0)*99;//转换为湿度值
+  72   1      }
+  73          
+  74          void USE_KEY(void)
+  75          {
+  76   1        if(KeyNum==4)//S7-系统工作状态切换按键(0-自动，1-手动)
+  77   1        {
+  78   2          if(Wor_State==0){Wor_State=1;}
+  79   2          else if(Wor_State==1){Wor_State=0;}
+  80   2          KeyNum=0;//按键状态清除
+  81   2        }
+  82   1        
+  83   1        /*S6、S5、S4手动工作状态下*/
+  84   1        if(Wor_State==1)
+  85   1        {
+  86   2          if(KeyNum==3)//S6-关闭与打开蜂鸣器提醒功能(0-关闭，1-鸣响)
+  87   2          {
+  88   3            if(Buz_flag==0){Buz_flag=1;}
+  89   3            else if(Buz_flag==1){Buz_flag=0;}
+  90   3            KeyNum=0;//按键状态清除
+  91   3          }
+  92   2          else if(KeyNum==2)//S5-打开灌溉系统
+  93   2          {
+  94   3            Rel_State=1;
+  95   3            KeyNum=0;
+  96   3          }
+  97   2          else if(KeyNum==1)//S4-关闭灌溉系统
+  98   2          {
+  99   3            Rel_State=0;
+ 100   3            KeyNum=0;
+ 101   3          }
+ 102   2        }
+ 103   1        
+ 104   1        /*S6、S5、S4自动工作状态下*/
+ 105   1        else if(Wor_State==0)
+ 106   1        {
+ 107   2          if(KeyNum==3)//S6-湿度阈值调整（第一次按下进入湿度阈值调整界面，第二次按下保存新阈值到EEPROM中）
+ 108   2          {
+ 109   3            if(S6_State==0){S6_State=1;}//(0-保存退回正常页面，1-湿度阈值调整页面)
+ 110   3            else if(S6_State==1){S6_State=0;}
+ 111   3            KeyNum=0;
+ 112   3          }
+ 113   2          else if(KeyNum==2)//S5-湿度阈值加1（在湿度阈值调整界面下有效）
+C51 COMPILER V9.59.0.0   MAIN                                                              02/26/2023 21:51:21 PAGE 3   
+
+ 114   2          {
+ 115   3            if(S6_State==1)
+ 116   3            {
+ 117   4              Hum_Limit++;
+ 118   4            }
+ 119   3            KeyNum=0;
+ 120   3          }
+ 121   2          else if(KeyNum==1)//S4-湿度阈值减1（在湿度阈值调整界面下有效）
+ 122   2          {
+ 123   3            if(S6_State==1)
+ 124   3            {
+ 125   4              Hum_Limit--;
+ 126   4            }
+ 127   3            KeyNum=0;
+ 128   3          }
+ 129   2        }
+ 130   1      }
+ 131          
+ 132          void Work_State(void)
+ 133          {
+ 134   1        //自动工作状态(系统上电默认自动工作状态)
+ 135   1        if(Wor_State==0)
+ 136   1        {
+ 137   2          LED_Open(0X01);//L1点亮
+ 138   2          Buz_State=0;//自动状态下关闭蜂鸣器
+ 139   2          if(humidity<Hum_Limit){Rel_State=1;}
+ 140   2          else{Rel_State=0;}
+ 141   2        }
+ 142   1        //手动工作状态
+ 143   1        else if(Wor_State==1)
+ 144   1        {
+ 145   2          LED_Open(0X02);//L2点亮
+ 146   2          S6_State=0;//手动状态下不显示阈值调整页面
+ 147   2          if(humidity<Hum_Limit&&Buz_flag==0){Buz_State=1;}
+ 148   2          else if(Buz_flag==1||humidity>=Hum_Limit){Buz_State=0;}
+ 149   2        }
+ 150   1      }
+ 151          
+ 152          void USE_EEPROM(void)
+ 153          {
+ 154   1        if(S6_State==1)//写入数据
+ 155   1        {
+ 156   2          AT24C02_WriteByte(0X01,Hum_Limit);//写周期最长是5ms，所以每次写入都要加一个5ms的延时
+ 157   2          Delay5ms();
+ 158   2        }
+ 159   1        else if(S6_State==0)//读取数据
+ 160   1        {
+ 161   2          Red_HumLimit=AT24C02_Read(0X01);
+ 162   2          Hum_Limit=Red_HumLimit;
+ 163   2        }
+ 164   1      }
+ 165          
+ 166          void USE_BUZZER(void)
+ 167          {
+ 168   1        if(Buz_State==1){BUZZER_Open();}
+ 169   1        else if(Buz_State==0){BUZZER_Close();}
+ 170   1      }
+ 171          void USE_RELAY(void)
+ 172          {
+ 173   1        if(Rel_State==1){RELAY_Open();}
+ 174   1        else if(Rel_State==0){RELAY_Close();}
+ 175   1      }
+C51 COMPILER V9.59.0.0   MAIN                                                              02/26/2023 21:51:21 PAGE 4   
+
+ 176          
+ 177          
+ 178          void main(void)
+ 179          {
+ 180   1        Sys_Init();
+ 181   1        Set_Time(Time);
+ 182   1        while(1)
+ 183   1        {
+ 184   2          Read_Time(Time);
+ 185   2          KEY_Press();
+ 186   2          USE_KEY();
+ 187   2          USE_RELAY();
+ 188   2          USE_BUZZER();
+ 189   2          USE_AD();
+ 190   2          USE_SMG();
+ 191   2          Work_State();
+ 192   2          USE_EEPROM();
+ 193   2        }
+ 194   1      }
+ 195          
+ 196          
+ 197            /*
+ 198            AD采集的数据通过数码管显示
+ 199            smg_vol=adc_vol*100;
+ 200          
+ 201            Nixie_Display(1,Nodot_duanma[][smg_vol/100]);
+ 202            Nixie_Display(2,dot_duanma[][(smg_vol/10)%10]);
+ 203            Nixie_Display(3,dot_duanma[][smg_vol%10]);
+ 204            */
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    506    ----
+   CONSTANT SIZE    =     32    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     10    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      5    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

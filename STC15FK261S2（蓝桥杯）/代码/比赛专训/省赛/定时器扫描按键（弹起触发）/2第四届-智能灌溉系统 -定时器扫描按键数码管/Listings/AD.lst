@@ -1,0 +1,51 @@
+C51 COMPILER V9.59.0.0   AD                                                                03/20/2023 22:18:20 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE AD
+OBJECT MODULE PLACED IN .\Objects\AD.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE AD.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\AD.lst) T
+                    -ABS(2) OBJECT(.\Objects\AD.obj)
+
+line level    source
+
+   1          #include "AD.h"
+   2          #include "iic.h"
+   3          
+   4          #define PCF8591_ADDRESS 0X90
+   5          #define COMMAND_AIN1 0X01   //光敏电阻
+   6          #define COMMAND_AIN3 0X03   //可调电阻
+   7          
+   8          
+   9          
+  10          unsigned char AD_Read(void)
+  11          {
+  12   1        unsigned char Data;
+  13   1        IIC_Start(); 
+  14   1        IIC_SendByte(PCF8591_ADDRESS);//写操作地址
+  15   1        IIC_WaitAck();
+  16   1        IIC_SendByte(COMMAND_AIN3); //写入控制字
+  17   1        IIC_WaitAck();
+  18   1        IIC_Stop();  
+  19   1        
+  20   1        IIC_Start(); 
+  21   1        IIC_SendByte(PCF8591_ADDRESS|0X01);//读操作地址
+  22   1        IIC_WaitAck();
+  23   1        Data=IIC_RecByte();
+  24   1        IIC_SendAck(1);//发送非应答
+  25   1        IIC_Stop();
+  26   1        return Data;
+  27   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     49    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

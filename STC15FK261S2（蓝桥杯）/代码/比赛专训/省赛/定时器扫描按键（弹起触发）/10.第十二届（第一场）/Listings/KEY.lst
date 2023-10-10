@@ -1,0 +1,66 @@
+C51 COMPILER V9.59.0.0   KEY                                                               03/23/2023 16:52:11 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\KEY.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE KEY.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\KEY.lst)
+                    - TABS(2) OBJECT(.\Objects\KEY.obj)
+
+line level    source
+
+   1          #include "KEY.h"
+   2          
+   3          static unsigned char KeyNum;
+   4          
+   5          unsigned char KEY_GetState()
+   6          {
+   7   1        unsigned char Num=0;
+   8   1        
+   9   1        P3|=0X3F;   //将按键使用到的P3口置1
+  10   1        P4|=0X14;   //将按键使用到的P4口置1
+  11   1        P32=0;
+  12   1        if(P44==0){Num=5;}    //s5
+  13   1        if(P42==0){Num=9;}    //s9
+  14   1        
+  15   1        P3|=0X3F;   //将按键使用到的P3口置1
+  16   1        P4|=0X14;   //将按键使用到的P4口置1
+  17   1        P33=0;
+  18   1        if(P44==0){Num=4;}
+  19   1        if(P42==0){Num=8;}
+  20   1        
+  21   1        return Num;
+  22   1      }
+  23          
+  24          void KEY_Loop()
+  25          {
+  26   1        static unsigned char N_State,L_State;   //定义静态变量记住按键状态
+  27   1        L_State=N_State;
+  28   1        N_State=KEY_GetState();
+  29   1        
+  30   1        if(L_State==4 && N_State==0){KeyNum=4;}
+  31   1        if(L_State==5 && N_State==0){KeyNum=5;}
+  32   1        if(L_State==8 && N_State==0){KeyNum=8;}
+  33   1        if(L_State==9 && N_State==0){KeyNum=9;}
+  34   1      }
+  35          
+  36          unsigned char KEY()
+  37          {
+  38   1        unsigned char Temp=0;
+  39   1        Temp=KeyNum;
+  40   1        KeyNum=0;   //清除按键状态
+  41   1        return Temp;
+  42   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    109    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

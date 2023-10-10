@@ -1,0 +1,69 @@
+C51 COMPILER V9.59.0.0   KEY                                                               06/20/2023 08:35:30 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\KEY.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE BSP\src\KEY.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\BSP\inc;.\TOOL\inc) DEBUG O
+                    -BJECTEXTEND PRINT(.\Listings\KEY.lst) TABS(2) OBJECT(.\Objects\KEY.obj)
+
+line level    source
+
+   1          #include "KEY.h"
+   2          #include "Delay.h"
+   3          #define set(x) P4=(x>>3)|(x>>4);P3=x
+   4          #define get() ((P4&0X04)<<4)|((P4&0X10)<<3)|(P3&0X3F)
+   5          
+   6          static unsigned char KeyNum;
+   7          unsigned char Trg,Cont;
+   8          void KEY_KBD()
+   9          {
+  10   1        unsigned char Dat;
+  11   1        set(0x0F);
+  12   1        Dat=get();
+  13   1        set(0xF0);
+  14   1        Dat=(get()|Dat)^0XFF;
+  15   1        Trg=Dat&(Dat^Cont);
+  16   1        Cont=Dat;
+  17   1      }
+  18          
+  19          void KEY_Loop()
+  20          {
+  21   1        KEY_KBD();
+  22   1        TR0=0;    //关闭生成波特率的定时器0
+  23   1        /*由于串口1与按键的P30和P31功能冲突。且使用定时器0作为波特率生成器.
+  24   1        所以要解决这一冲突需要在使用按键的时候关闭该定时器，使用结束后重新打开该定时器并对P3口复位*/
+  25   1        switch(Trg^0XFF)
+  26   1        {
+  27   2          case 0x77:KeyNum=4;break; //S4
+  28   2          case 0XB7:KeyNum=8;break; //S8
+  29   2          case 0XD7:KeyNum=12;break;  //S12
+  30   2          case 0XE7:KeyNum=16;break;  //S16
+  31   2          case 0XBB:KeyNum=9;break; //S9
+  32   2        }
+  33   1        TR0=1;  //打开生成波特率的定时器0
+  34   1        P3=0XFF;    //对P3复位
+  35   1      }
+  36          
+  37          unsigned char KEY()
+  38          {
+  39   1        unsigned char Temp;
+  40   1        Temp=KeyNum;
+  41   1        KeyNum=0;
+  42   1        return Temp;
+  43   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    135    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+C51 COMPILER V9.59.0.0   KEY                                                               06/20/2023 08:35:30 PAGE 2   
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

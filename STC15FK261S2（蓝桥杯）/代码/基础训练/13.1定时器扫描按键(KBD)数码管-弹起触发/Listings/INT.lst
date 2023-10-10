@@ -1,0 +1,59 @@
+C51 COMPILER V9.59.0.0   INT                                                               03/18/2023 19:46:40 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE INT
+OBJECT MODULE PLACED IN .\Objects\INT.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE BSP\src\INT.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\BSP\inc;.\TOOL\inc) DEBUG O
+                    -BJECTEXTEND PRINT(.\Listings\INT.lst) TABS(2) OBJECT(.\Objects\INT.obj)
+
+line level    source
+
+   1          #include "INT.h"
+   2          /*breif：IAP15F2K61S2（STC15系列）单片机。
+   3                  根据原理图可知，外部中断INT0由P32上的S5按键触发。
+   4                  外部中断INT1由P33上的S4按键触发。
+   5                  外部中断INT2由P36IO口触发。
+   6                  外部中断INT3由P37IO口触发。
+   7          */
+   8                  
+   9          void INT0_Init(void)
+  10          {
+  11   1        IT0=1;//IT0=0下降沿和上升沿都可以触发，IT0=1下降沿触发
+  12   1        IE0=0;//中断标志位清0（请求中断由硬件置1，中断响应后由硬件清0）
+  13   1        EX0=1;
+  14   1        EA=1;
+  15   1      }
+  16          void INT1_Init(void)
+  17          {
+  18   1        IT1=1;//IT0=0下降沿和上升沿都可以触发，IT0=1下降沿触发
+  19   1        IE1=0;//中断标志位清0（请求中断由硬件置1，中断响应后由硬件清0）
+  20   1        EX1=1;
+  21   1        EA=1;
+  22   1      }
+  23          
+  24          /*
+  25          //外部中断0的中断函数
+  26          void INT0_Routine(void) interrupt 0
+  27          {
+  28            //中断标志位IE0中断响应后被清0
+  29          }*/
+  30          /*
+  31          //外部中断1的中断函数
+  32          void INT0_Routine(void) interrupt 1
+  33          {
+  34            //中断标志位IE0中断响应后被清0
+  35          }*/
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     18    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

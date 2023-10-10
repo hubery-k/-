@@ -1,0 +1,303 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              03/20/2023 22:39:30 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.ls
+                    -t) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "LED.h"
+   2          #include "RB.h"
+   3          #include "Nixie.h"
+   4          #include "AD.h"
+   5          #include "Clock.h"
+   6          #include "EEPROM.h"
+   7          #include "KEY.h"
+   8          #include "Timer.h"
+   9          #include "Delay.h"
+  10          /*本程序使用硬件：LED、蜂鸣器、继电器、数码管、AD(PCF8591)、EEPROM(AT24C02)、按键、DS1302时钟*/
+  11          typedef unsigned int uint;
+  12          typedef unsigned char uchar;
+  13          
+  14          uchar code Nodot_duanma[]={0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0x88,0x83,0xc6,0xa1,0x86,0x8e
+             -};
+  15          uchar code dot_duanma[]={0x40,0x79,0x24,0x30,0x19,0x12,0x02,0x78,0x00,0x10,0x08,0x03,0x46,0x21,0x06,0x0e};
+  16          
+  17          /*BCD码的好处在时间上对比16进制看起来很直观（8时30分0秒）*/
+  18          /*设置时间的数组不能加上code放入ROM中，因为读取的时间是一直更改的。放入ROM(程序存储区)中的数据将不能被更改
+             -*/
+  19          uchar Time[]={0X00,0X30,0X08};
+  20          
+  21          
+  22          
+  23          uchar KeyNum;
+  24          float adc_vol;
+  25          uchar humidity;
+  26          uchar Hum_Limit=50;//湿度阈值初始为50%
+  27          uchar Red_HumLimit;
+  28          bit Wor_State;
+  29          bit Buz_State;
+  30          bit Rel_State;
+  31          bit S6_State;
+  32          bit Buz_flag=1;   //蜂鸣器提醒功能（默认打开）
+  33          bit L1_State;
+  34          bit L2_State;
+  35          
+  36          bit AD_flag;
+  37          bit C_flag;
+  38          bit Save_flag;
+  39          
+  40          void Sys_Init(void)
+  41          {
+  42   1        LED_Control(0X00);    //关闭所有LED
+  43   1        RB_Control(0X00);//关闭继电器蜂鸣器
+  44   1        P2&=0X1F;//锁存
+  45   1      }
+  46          
+  47          void USE_DS1302(void)
+  48          {
+  49   1        if(C_flag==1)
+  50   1        {
+  51   2          C_flag=0;
+  52   2          Read_Time(Time);
+C51 COMPILER V9.59.0.0   MAIN                                                              03/20/2023 22:39:30 PAGE 2   
+
+  53   2        }
+  54   1      }
+  55          
+  56          void USE_AD(void)
+  57          {
+  58   1        if(AD_flag==1)
+  59   1        {
+  60   2          AD_flag=0;
+  61   2          adc_vol=AD_Read()*(5.0/255);//转换为0-5V电压值
+  62   2          
+  63   2        }
+  64   1        humidity=(adc_vol/5.0)*99;//转换为湿度值  （要将这句语句放入if中否则刷新太快出现问题）
+  65   1      }
+  66          
+  67          void USE_EEPROM(void)
+  68          {
+  69   1        if(Save_flag==1)
+  70   1        {
+  71   2          Save_flag=0;
+  72   2          AT24C02_WriteByte(0X01,Hum_Limit);//写周期最长是5ms，所以每次写入都要加一个5ms的延时
+  73   2          Delay5ms();
+  74   2        }
+  75   1      }
+  76          
+  77          void USE_KEY(void)
+  78          {
+  79   1        KeyNum=Key();
+  80   1        if(KeyNum==4)//S7-系统工作状态切换按键(0-自动，1-手动)
+  81   1        {
+  82   2          Wor_State=~Wor_State;
+  83   2        }
+  84   1        
+  85   1        /*S6、S5、S4手动工作状态下*/
+  86   1        if(Wor_State==1)
+  87   1        {
+  88   2          if(KeyNum==3)//S6-关闭与打开蜂鸣器提醒功能(0-关闭，1-鸣响)
+  89   2          {
+  90   3            Buz_flag=~Buz_flag;
+  91   3          }
+  92   2          else if(KeyNum==2)//S5-打开灌溉系统
+  93   2          {
+  94   3            Rel_State=1;
+  95   3          }
+  96   2          else if(KeyNum==1)//S4-关闭灌溉系统
+  97   2          {
+  98   3            Rel_State=0;
+  99   3          }
+ 100   2        }
+ 101   1        
+ 102   1        /*S6、S5、S4自动工作状态下*/
+ 103   1        else if(Wor_State==0)
+ 104   1        {
+ 105   2          if(KeyNum==3)//S6-湿度阈值调整（第一次按下进入湿度阈值调整界面，第二次按下保存新阈值到EEPROM中）
+ 106   2          {
+ 107   3            S6_State=~S6_State;   //(0-保存退回正常页面，1-湿度阈值调整页面)
+ 108   3            if(S6_State==0){Save_flag=1;}
+ 109   3          }
+ 110   2          else if(KeyNum==2)//S5-湿度阈值加1（在湿度阈值调整界面下有效）
+ 111   2          {
+ 112   3            if(S6_State==1){Hum_Limit++;}
+ 113   3          }
+ 114   2          else if(KeyNum==1)//S4-湿度阈值减1（在湿度阈值调整界面下有效）
+C51 COMPILER V9.59.0.0   MAIN                                                              03/20/2023 22:39:30 PAGE 3   
+
+ 115   2          {
+ 116   3            if(S6_State==1){Hum_Limit--;}
+ 117   3          }
+ 118   2        }
+ 119   1      }
+ 120          
+ 121          void USE_SMG(void)
+ 122          {
+ 123   1        //初始显示状态
+ 124   1        if(S6_State==0)
+ 125   1        {
+ 126   2          Nixie_SetBuf(0,Nodot_duanma[Time[2]/16]);
+ 127   2          Nixie_SetBuf(1,Nodot_duanma[Time[2]%16]);
+ 128   2          Nixie_SetBuf(2,0xBF);
+ 129   2          Nixie_SetBuf(3,Nodot_duanma[Time[1]/16]);
+ 130   2          Nixie_SetBuf(4,Nodot_duanma[Time[1]%16]);
+ 131   2          Nixie_SetBuf(5,0xFF);
+ 132   2          Nixie_SetBuf(6,Nodot_duanma[humidity/10]);
+ 133   2          Nixie_SetBuf(7,Nodot_duanma[humidity%10]);
+ 134   2        }
+ 135   1        
+ 136   1        
+ 137   1        //湿度阈值调整界面（自动工作模式下）
+ 138   1        if(S6_State==1)
+ 139   1        {
+ 140   2          Nixie_SetBuf(0,0xBF);
+ 141   2          Nixie_SetBuf(1,0xBF);
+ 142   2          
+ 143   2          Nixie_SetBuf(2,0xFF);
+ 144   2          Nixie_SetBuf(3,0xFF);
+ 145   2          Nixie_SetBuf(4,0xFF);
+ 146   2          Nixie_SetBuf(5,0xFF);
+ 147   2      
+ 148   2          Nixie_SetBuf(6,Nodot_duanma[Hum_Limit/10]);
+ 149   2          Nixie_SetBuf(7,Nodot_duanma[Hum_Limit%10]);
+ 150   2        }
+ 151   1      }
+ 152          
+ 153          void Work_State(void)
+ 154          {
+ 155   1        //自动工作状态(系统上电默认自动工作状态)
+ 156   1        if(Wor_State==0)
+ 157   1        {
+ 158   2          L1_State=1;   //L1点亮
+ 159   2          L2_State=0;   //L2熄灭
+ 160   2          Buz_State=0;    //自动状态下关闭蜂鸣器
+ 161   2          if(humidity<Hum_Limit){Rel_State=1;}
+ 162   2          else{Rel_State=0;}
+ 163   2        }
+ 164   1        //手动工作状态
+ 165   1        else if(Wor_State==1)
+ 166   1        {
+ 167   2          L2_State=1;   //L2点亮
+ 168   2          L1_State=0;   //L1熄灭
+ 169   2          S6_State=0;   //手动状态下不显示阈值调整页面
+ 170   2          if(humidity<Hum_Limit&&Buz_flag==1){Buz_State=1;}
+ 171   2          else if(humidity>=Hum_Limit||Buz_flag==0){Buz_State=0;}
+ 172   2        }
+ 173   1      }
+ 174          
+ 175          
+ 176          void USE_LED(void)
+C51 COMPILER V9.59.0.0   MAIN                                                              03/20/2023 22:39:30 PAGE 4   
+
+ 177          {
+ 178   1        LED_Init();
+ 179   1        
+ 180   1        if(L1_State==1){L1=0;}    //L1亮
+ 181   1        else{L1=1;}
+ 182   1        if(L2_State==1){L2=0;}    //L1灭
+ 183   1        else{L2=1;}
+ 184   1        
+ 185   1        P2&=0x1F;
+ 186   1      }
+ 187          
+ 188          void USE_RB(void)
+ 189          {
+ 190   1        RB_Init();
+ 191   1        
+ 192   1        if(Rel_State==1){Relay=1;}
+ 193   1        else{Relay=0;}
+ 194   1        if(Buz_State==1){Buzzer=1;}
+ 195   1        else{Buzzer=0;}
+ 196   1        
+ 197   1        P2&=0X1F;   //锁存  
+ 198   1      }
+ 199          
+ 200          /*1ms的定时中断函数*/
+ 201          void Timer1_Routine(void) interrupt 3
+ 202          {
+ 203   1        static unsigned char T1_Count1;
+ 204   1        static unsigned char T1_Count2;
+ 205   1        static unsigned char AD_Count;
+ 206   1        static unsigned char C_Count;
+ 207   1        
+ 208   1        T1_Count1++;T1_Count2++;
+ 209   1        if(T1_Count1==2)
+ 210   1        {
+ 211   2          T1_Count1=0;
+ 212   2          Nixie_Loop();
+ 213   2        }
+ 214   1        if(T1_Count2==10)
+ 215   1        {
+ 216   2          T1_Count2=0;
+ 217   2          Key_Loop();
+ 218   2        }
+ 219   1        
+ 220   1        AD_Count++;
+ 221   1        if(AD_Count==50)    //达到50ms采集AD数据一次
+ 222   1        {
+ 223   2          AD_Count=0;
+ 224   2          AD_flag=1;
+ 225   2        }
+ 226   1        
+ 227   1        C_Count++;
+ 228   1        if(C_Count==50)   //达到50ms采集时间数据一次
+ 229   1        {
+ 230   2          C_Count=0;
+ 231   2          C_flag=1;
+ 232   2        }
+ 233   1      }
+ 234          
+ 235          void main(void)
+ 236          {
+ 237   1        Sys_Init();
+ 238   1        Set_Time(Time); 
+C51 COMPILER V9.59.0.0   MAIN                                                              03/20/2023 22:39:30 PAGE 5   
+
+ 239   1        Hum_Limit=AT24C02_Read(0X01);
+ 240   1        Timer1Init();
+ 241   1        while(1)
+ 242   1        {
+ 243   2          EA=0;
+ 244   2          USE_RB();
+ 245   2          USE_LED();
+ 246   2          EA=1;
+ 247   2          USE_AD();
+ 248   2          USE_EEPROM();
+ 249   2          USE_DS1302();
+ 250   2          USE_KEY();
+ 251   2          USE_SMG();
+ 252   2          Work_State();
+ 253   2        }
+ 254   1      }
+ 255          
+ 256          
+ 257          /*出现的问题及解决方法：*/
+ 258          
+ 259          /*
+ 260            1. 在操作LED、继电器、蜂鸣器的时候，正好碰到定时器中断，导致P0口数据不稳定，导致LED、继电器、蜂鸣器异常。
+ 261            解决方法：运行到LED和继电器蜂鸣器的时候不打开中断。
+ 262          */
+ 263          
+ 264          /*
+ 265            2.中断会影响软件的模拟时序的数据传输。解决方法是在调用时序进行数据传输时将中断EA置0关闭，等待数据读取或写
+             -入成功再置1代开总中断。
+ 266          最好的解决方法是：在中断中定义标志位，当达到一定时间后标志位置1，在主程序中做判断当标志位为1时读取数据。这
+             -样可以省去Delay的过程还不会与中断冲突。
+ 267          */
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    683    ----
+   CONSTANT SIZE    =     32    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     15    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =     10    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

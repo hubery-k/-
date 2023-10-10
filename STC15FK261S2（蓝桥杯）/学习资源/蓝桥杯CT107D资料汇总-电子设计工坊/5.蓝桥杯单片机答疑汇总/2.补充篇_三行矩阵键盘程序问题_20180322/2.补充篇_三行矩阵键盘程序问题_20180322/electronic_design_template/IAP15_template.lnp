@@ -1,0 +1,4 @@
+"STARTUP.obj",
+"main.obj" 
+TO "IAP15_template" 
+RAMSIZE(256) 

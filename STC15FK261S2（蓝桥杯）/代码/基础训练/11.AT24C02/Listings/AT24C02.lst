@@ -1,0 +1,63 @@
+C51 COMPILER V9.59.0.0   AT24C02                                                           06/20/2023 08:46:11 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE AT24C02
+OBJECT MODULE PLACED IN .\Objects\AT24C02.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE BSP\src\AT24C02.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\BSP\inc;.\TOOL\inc) DEB
+                    -UG OBJECTEXTEND PRINT(.\Listings\AT24C02.lst) TABS(2) OBJECT(.\Objects\AT24C02.obj)
+
+line level    source
+
+   1          #include "AT24C02.h"
+   2          #include "iic.h"
+   3          
+   4          
+   5          /*AT24C02Éè±¸µØÖ·ÓÐÒ»¸ö×Ö½Ú×é³É¡£Ç°ËÄÎ»ÊÇ¹Ì¶¨ÖµÎª1010¡£ºóÈýÎ»ÊÇ¿É±à³Ì²¿·Ö£¬ÓÉÓÚÔÚÉè¼ÆÍ¼ÖÐÈ«²¿½ÓµØÁËËùÒÔÈ«²
+             -¿Îª0¡£×îºóÒ»Î»ÊÇ¶ÁÐ´Î»£¬0Ð´1¶Á*/
+   6          #define AT24C02_ADDRESS  0XA0
+   7          //µØÖ··¶Î§ÓÉÓÚ¶¨ÒåµÄÊÇunsigned charÐÍ£¬ËùÒÔÔÚ0~255¶¼¿ÉÒÔ
+   8          void AT24C02_WriteByte(unsigned char Word_Addr,Date)
+   9          {
+  10   1        IIC_Start();
+  11   1        IIC_SendByte(AT24C02_ADDRESS);//·¢ËÍ´Ó»úÉè±¸µØÖ·+Ð´ÈëÊý¾ÝÃüÁî
+  12   1        IIC_WaitAck();
+  13   1        IIC_SendByte(Word_Addr);//·¢ËÍÊý¾ÝÒª´æÈëµÄµØÖ·
+  14   1        IIC_WaitAck();
+  15   1        IIC_SendByte(Date);
+  16   1        IIC_WaitAck();
+  17   1        IIC_Stop();
+  18   1      }
+  19          
+  20          unsigned char AT24C02_ReadByte(unsigned char Word_Addr)
+  21          {
+  22   1        unsigned char Data;
+  23   1        IIC_Start();
+  24   1        IIC_SendByte(AT24C02_ADDRESS);
+  25   1        IIC_WaitAck();
+  26   1        IIC_SendByte(Word_Addr);//£¨¶¨Î»µ½£©´æÈ¡Êý¾ÝµÄµØÖ·¡££¨Ð´ÈëµÄµØÖ·»á´æÈëµØÖ·Ö¸ÕëÖÐ£¬ÏÂ¸öÊ±ÐòµÄÊý¾Ý¶ÁÈ¡¾Í»á´
+             -Ó¸ÃµØÖ·¿ªÊ¼£©
+  27   1        IIC_WaitAck();
+  28   1        
+  29   1        
+  30   1        IIC_Start();//ÁíÆðÒ»¸öÊ±ÐòÖØÐÂÖ¸¶¨¶ÁÐ´×´Ì¬
+  31   1        IIC_SendByte(AT24C02_ADDRESS|0x01);//·¢ËÍ´Ó»úÉè±¸µØÖ·+¶Á³öÊý¾ÝÃüÁî
+  32   1        IIC_WaitAck();
+  33   1        Data=IIC_RecByte();
+  34   1        IIC_SendAck(1);//·¢ËÍ·ÇÓ¦´ð±íÊ¾½áÊø
+  35   1        IIC_Stop();
+  36   1        return Data;
+  37   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     84    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       5
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

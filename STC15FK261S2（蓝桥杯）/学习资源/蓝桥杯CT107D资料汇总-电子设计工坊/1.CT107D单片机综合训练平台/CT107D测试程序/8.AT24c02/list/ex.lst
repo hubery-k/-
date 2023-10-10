@@ -1,0 +1,164 @@
+C51 COMPILER V9.02   EX                                                                    01/01/2006 01:36:36 PAGE 1   
+
+
+C51 COMPILER V9.02, COMPILATION OF MODULE EX
+OBJECT MODULE PLACED IN .\output\ex.obj
+COMPILER INVOKED BY: D:\Keil\C51\BIN\C51.EXE ex.c BROWSE DEBUG OBJECTEXTEND PRINT(.\list\ex.lst) OBJECT(.\output\ex.obj)
+
+line level    source
+
+   1          #include<AT89X52.h>
+   2          #include<intrins.h>
+   3          #define somenop(); {_nop_();_nop_();_nop_();_nop_();_nop_();} 
+   4          sbit SCK = P2^0;
+   5          sbit SDA = P2^1;
+   6          void delay(int cnt);
+   7          void i2c_start(void);
+   8          void i2c_stop(void);
+   9          void i2c_ACK(unsigned char ck);
+  10          bit i2c_waitACK();
+  11          void i2c_sendbyte(unsigned char ch);
+  12          unsigned char i2c_readbyte(unsigned char add);
+  13          void delay(int cnt)
+  14          {
+  15   1          int i;
+  16   1          for(i=0;i<cnt;i++);
+  17   1      }
+  18          void i2c_start()
+  19          {
+  20   1          SDA = 1;
+  21   1          _nop_();
+  22   1          SCK = 1;
+  23   1          somenop();
+  24   1          SDA = 0;
+  25   1          somenop();
+  26   1          SCK = 0;
+  27   1      }
+  28          void i2c_stop()
+  29          {
+  30   1          SDA = 0;
+  31   1          _nop_();
+  32   1          SCK = 1;
+  33   1          somenop();
+  34   1          SDA = 1;
+  35   1      }
+  36          void i2c_ACK(unsigned char ck)
+  37          {
+  38   1          if(ck) 
+  39   1                      SDA = 0;
+  40   1              else 
+  41   1                      SDA = 1; 
+  42   1              somenop();
+  43   1              SCK = 1;
+  44   1              somenop();
+  45   1              SCK = 0;
+  46   1          SDA = 1; 
+  47   1          somenop();
+  48   1      }
+  49          
+  50          bit i2c_waitACK()
+  51          {
+  52   1          SDA = 1;
+  53   1          somenop();
+  54   1          SCK = 1;
+  55   1          somenop();
+C51 COMPILER V9.02   EX                                                                    01/01/2006 01:36:36 PAGE 2   
+
+  56   1          if(SDA)    
+  57   1          {   
+  58   2                      SCK = 0;
+  59   2                      i2c_stop();
+  60   2                      return 0;
+  61   2          }
+  62   1              else  
+  63   1          { 
+  64   2                      SCK = 0;
+  65   2                      return 1;
+  66   2          }
+  67   1      }
+  68          
+  69          void i2c_sendbyte(unsigned char ch)
+  70          {
+  71   1          unsigned char i;
+  72   1          for(i=0;i<8;i++)
+  73   1          {   
+  74   2                      if(ch&0x80) 
+  75   2                              SDA = 1;
+  76   2                      else 
+  77   2                              SDA = 0;
+  78   2                      somenop();
+  79   2                      SCK = 1;
+  80   2                      ch<<=1;
+  81   2                      somenop();
+  82   2              SCK = 0;
+  83   2              }
+  84   1      }
+  85           
+  86          unsigned char i2c_recbyte()
+  87          {
+  88   1          unsigned char da;
+  89   1          unsigned char j;
+  90   1          for(j=0;j<8;j++)
+  91   1          {   
+  92   2                      SCK = 1;
+  93   2                      somenop();
+  94   2                      da<<=1;
+  95   2                      if(SDA) 
+  96   2                      da=da|0x01;
+  97   2                      SCK = 0;
+  98   2                      somenop();
+  99   2           }
+ 100   1           return da;
+ 101   1      }
+ 102          void i2c_writebyte(unsigned char add,unsigned char dat)
+ 103          {
+ 104   1          i2c_start();
+ 105   1          i2c_sendbyte(0xa0);
+ 106   1          i2c_waitACK();
+ 107   1          i2c_sendbyte(add);
+ 108   1          i2c_waitACK();
+ 109   1          i2c_sendbyte(dat);
+ 110   1          i2c_waitACK();
+ 111   1          i2c_stop();
+ 112   1          delay(124);
+ 113   1      }
+ 114          unsigned char i2c_readbyte(unsigned char add)
+ 115          {
+ 116   1          unsigned char da;
+ 117   1          i2c_start();
+C51 COMPILER V9.02   EX                                                                    01/01/2006 01:36:36 PAGE 3   
+
+ 118   1          i2c_sendbyte(0xa0);
+ 119   1          i2c_waitACK();
+ 120   1          i2c_sendbyte(add);
+ 121   1          i2c_waitACK();
+ 122   1      i2c_start();
+ 123   1          i2c_sendbyte(0xa1);
+ 124   1          i2c_waitACK();
+ 125   1          da = i2c_recbyte();
+ 126   1          i2c_ACK(0); 
+ 127   1      i2c_stop();
+ 128   1          return da;
+ 129   1      }
+ 130          void main()
+ 131          {
+ 132   1          i2c_writebyte(0x00,0x11);
+ 133   1              P0=i2c_readbyte(0x00);//观察P0口的状态是否为0xAA
+ 134   1              P2=0x80;
+ 135   1              P2=0x00;
+ 136   1          while(1);
+ 137   1      } 
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    280    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

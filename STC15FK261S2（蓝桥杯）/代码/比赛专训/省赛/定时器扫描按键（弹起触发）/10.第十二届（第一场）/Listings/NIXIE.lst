@@ -1,0 +1,70 @@
+C51 COMPILER V9.59.0.0   NIXIE                                                             03/23/2023 16:52:11 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE NIXIE
+OBJECT MODULE PLACED IN .\Objects\NIXIE.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE NIXIE.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\NIXIE.
+                    -lst) TABS(2) OBJECT(.\Objects\NIXIE.obj)
+
+line level    source
+
+   1          #include "NIXIE.h"
+   2          
+   3          unsigned char Nixie_Buf[8]={0XFF,0XFF,0XFF,0XFF,0XFF,0XFF,0XFF,0XFF};
+   4          
+   5          /*Com端选-高电平选中   段选-低电平选中*/
+   6          void Nixie_Init(unsigned char n)
+   7          {
+   8   1        P2&=0X1F;   //锁存
+   9   1        if(n==1)  
+  10   1        {
+  11   2          P0=0X00;
+  12   2          P2=(P2&0X1F)|0XC0;//Com端选
+  13   2        }
+  14   1        else if(n==2)
+  15   1        {
+  16   2          P0=0XFF;
+  17   2          P2=(P2&0X1F)|0XE0;//段选
+  18   2        }
+  19   1      }
+  20          
+  21          void Nixie_Display(unsigned char pos,value)
+  22          {
+  23   1        Nixie_Init(2);    //消隐
+  24   1        
+  25   1        Nixie_Init(1);
+  26   1        P0|=0X01<<pos;
+  27   1        Nixie_Init(2);
+  28   1        P0&=value;
+  29   1      
+  30   1        P2&=0X1F;   //锁存
+  31   1      }
+  32          
+  33          void Nixie_Loop()
+  34          {
+  35   1        static unsigned char i=0;
+  36   1        Nixie_Display(i,Nixie_Buf[i]);
+  37   1        i++;
+  38   1        if(i==8){i=0;}
+  39   1      }
+  40          
+  41          void Nixie_SetBuf(unsigned char Location,Data)
+  42          {
+  43   1        Nixie_Buf[Location]=Data;
+  44   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    116    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      9    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+C51 COMPILER V9.59.0.0   NIXIE                                                             03/23/2023 16:52:11 PAGE 2   
+
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

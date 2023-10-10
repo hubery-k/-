@@ -1,0 +1,113 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              06/20/2023 08:36:20 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE APP\main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\BSP\inc;.\TOOL\inc) DEBUG OBJE
+                    -CTEXTEND PRINT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "BUZZER.h"
+   2          #include "UART.h"
+   3          #include "Timer.h"
+   4          #include "KEY.h"
+   5          #include "Nixie.h"
+   6          #include "Delay.h"
+   7          
+   8          
+   9          unsigned char code Nodot_SMG[16]={~0x3F,~0x06,~0x5B,~0x4F,~0x66,~0x6D,~0x7D,~0x07,~0x7F,~0x6F,~0x77,~0x7C,
+             -~0x39,~0x5E,~0x79,~0x71};
+  10          unsigned char Send_Array[]="123\r\n";
+  11          unsigned int Distance=500;
+  12          unsigned char KeyNum;
+  13          bit Interface;
+  14          bit flag;
+  15          
+  16          void USE_KEY()
+  17          {
+  18   1        KeyNum=KEY();
+  19   1        if(KeyNum==4)   //S4-界面切换按键
+  20   1        {
+  21   2          Interface=~Interface;
+  22   2          flag=1;
+  23   2          
+  24   2        }
+  25   1      }
+  26          
+  27          void USE_SMG()
+  28          {
+  29   1        if(Interface==1)
+  30   1        {
+  31   2          Nixie_SetBuf(0,0XC1);   //标识符-U
+  32   2          Nixie_SetBuf(1,Nodot_SMG[1]);
+  33   2          Nixie_SetBuf(2,0XFF);
+  34   2          Nixie_SetBuf(3,0XFF);
+  35   2          Nixie_SetBuf(4,0XFF);
+  36   2          Nixie_SetBuf(5,Nodot_SMG[Distance/100]);
+  37   2          Nixie_SetBuf(6,Nodot_SMG[Distance/10%10]);
+  38   2          Nixie_SetBuf(7,Nodot_SMG[Distance%10]);   
+  39   2        }
+  40   1        else
+  41   1        {
+  42   2          Nixie_SetBuf(0,0XFF);   //标识符-U
+  43   2          Nixie_SetBuf(1,0XFF);
+  44   2          Nixie_SetBuf(2,0XFF);
+  45   2          Nixie_SetBuf(3,0XFF);
+  46   2          Nixie_SetBuf(4,0XFF);
+  47   2          Nixie_SetBuf(5,0XFF);
+  48   2          Nixie_SetBuf(6,0XFF);
+  49   2          Nixie_SetBuf(7,0XFF);   
+  50   2        }
+  51   1      }
+  52          
+  53          void main(void)
+C51 COMPILER V9.59.0.0   MAIN                                                              06/20/2023 08:36:20 PAGE 2   
+
+  54          {
+  55   1        BUZZER_Init();
+  56   1        UartInit();
+  57   1        Timer0Init();
+  58   1        while(1)
+  59   1        {
+  60   2          USE_SMG();
+  61   2          USE_KEY();
+  62   2          if(flag==1)
+  63   2          {
+  64   3            flag=0;
+  65   3            UART_SendString(Send_Array);
+  66   3          }
+  67   2        }
+  68   1      }
+  69          
+  70          void Timer0_Routine() interrupt 1
+  71          {
+  72   1        static unsigned char Count1;
+  73   1        static unsigned char Count2;
+  74   1        Count1++;
+  75   1        Count2++;
+  76   1        if(Count1==2)
+  77   1        {
+  78   2          Count1=0;
+  79   2          Nixie_Loop();
+  80   2        }
+  81   1        if(Count2==10)
+  82   1        {
+  83   2          Count2=0;
+  84   2          KEY_Loop();
+  85   2        }
+  86   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    351    ----
+   CONSTANT SIZE    =     16    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     11    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      2    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

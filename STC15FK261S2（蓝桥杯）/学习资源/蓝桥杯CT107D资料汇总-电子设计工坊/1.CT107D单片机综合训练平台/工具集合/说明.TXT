@@ -1,0 +1,6 @@
+软件说明：
+
+1. Commwatch.exe 串口调试工具
+2. CH341DP.exe；ATMEL 51 AVR单片机下载软件
+3. Lcmzimo.exe；LCD字模提取软件
+4. STC_ISP_V483.EXE；STC 51单片机下载软件

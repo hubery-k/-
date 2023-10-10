@@ -1,0 +1,72 @@
+C51 COMPILER V9.59.0.0   NIXIE                                                             03/22/2023 10:48:47 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE NIXIE
+OBJECT MODULE PLACED IN .\Objects\Nixie.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE Nixie.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\Nixie.
+                    -lst) TABS(2) OBJECT(.\Objects\Nixie.obj)
+
+line level    source
+
+   1          #include "RB.h"
+   2          
+   3          //数据缓存区，通过在主循环中设置数据缓存区然后在定时器中不断扫描显示
+   4          unsigned char Nixie_Buf[8]={0XFF,0XFF,0XFF,0XFF,0XFF,0XFF,0XFF,0XFF};
+   5          
+   6          /*Com端高电平导通，段选低电平导通*/
+   7          void Nixie_Init(unsigned char n)
+   8          {
+   9   1        P2&=0X1F;
+  10   1        if(n==1)    //Com端选
+  11   1        {
+  12   2          P0=0X00;    //都不选中
+  13   2          P2=(P2&0X1F)|0XC0;
+  14   2        }
+  15   1        else if(n==2)   //段选
+  16   1        {
+  17   2          P0=0XFF;    //都不点亮
+  18   2          P2=(P2&0X1F)|0XE0;
+  19   2        }
+  20   1      }
+  21          
+  22          void Nixie_Display(unsigned char pos,value)
+  23          {
+  24   1        Nixie_Init(2);
+  25   1        
+  26   1        Nixie_Init(1);
+  27   1        P0|=0x01<<pos;
+  28   1        Nixie_Init(2);
+  29   1        P0&=value;
+  30   1        P2&=0X1F;
+  31   1      }
+  32          
+  33          /*数码管循环函数。放在定时器扫描*/
+  34          void Nixie_Loop(void)
+  35          {
+  36   1        static unsigned char i=0;   //局部变量调用之前需要赋初值
+  37   1        Nixie_Display(i,Nixie_Buf[i]);
+  38   1        i++;
+  39   1        if(i>8){i=0;}
+  40   1      }
+  41          
+  42          /*设置数据缓存区*/
+  43          void Nixie_SetBuf(unsigned char Location,Number)    
+  44          {
+  45   1        Nixie_Buf[Location]=Number;
+  46   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    122    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      9    ----
+C51 COMPILER V9.59.0.0   NIXIE                                                             03/22/2023 10:48:47 PAGE 2   
+
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

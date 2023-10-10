@@ -1,0 +1,223 @@
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                    12/17/2022  01:31:45  PAGE 1
+
+
+BL51 BANKED LINKER/LOCATER V6.22.2.0, INVOKED BY:
+D:\KEIL\C51\BIN\BL51.EXE STARTUP.obj, 数码管动态显示.obj TO 数码管动态显示 RAMSIZE (256)
+
+
+MEMORY MODEL: SMALL
+
+
+INPUT MODULES INCLUDED:
+  STARTUP.obj (?C_STARTUP)
+  数码管动态显示.obj (______________)
+  D:\KEIL\C51\LIB\C51S.LIB (?C_INIT)
+
+
+LINK MAP OF MODULE:  数码管动态显示 (?C_STARTUP)
+
+
+            TYPE    BASE      LENGTH    RELOCATION   SEGMENT NAME
+            -----------------------------------------------------
+
+            * * * * * * *   D A T A   M E M O R Y   * * * * * * *
+            REG     0000H     0008H     ABSOLUTE     "REG BANK 0"
+            DATA    0008H     0001H     UNIT         ?DT?______________
+            IDATA   0009H     0001H     UNIT         ?STACK
+
+            * * * * * * *   C O D E   M E M O R Y   * * * * * * *
+            CODE    0000H     0003H     ABSOLUTE     
+                    0003H     07FDH                  *** GAP ***
+            CODE    0800H     008CH     UNIT         ?C_C51STARTUP
+            CODE    088CH     0045H     UNIT         ?PR?DISPLAY_DYNAMIC?______________
+            CODE    08D1H     0033H     UNIT         ?PR?_SELECTHC573?______________
+            CODE    0904H     0021H     UNIT         ?PR?_DISPLAYSMG_BIT?______________
+            CODE    0925H     0016H     UNIT         ?PR?_DELAYSMG?______________
+            CODE    093BH     0015H     UNIT         ?PR?MAIN?______________
+            CODE    0950H     0012H     UNIT         ?CO?______________
+            CODE    0962H     0004H     UNIT         ?C_INITSEG
+
+
+
+OVERLAY MAP OF MODULE:   数码管动态显示 (?C_STARTUP)
+
+
+SEGMENT
+  +--> CALLED SEGMENT
+---------------------
+?C_C51STARTUP
+  +--> ?PR?MAIN?______________
+  +--> ?C_INITSEG
+
+?PR?MAIN?______________
+  +--> ?PR?DISPLAY_DYNAMIC?______________
+
+?PR?DISPLAY_DYNAMIC?______________
+  +--> ?CO?______________
+  +--> ?PR?_DELAYSMG?______________
+  +--> ?PR?_DISPLAYSMG_BIT?______________
+
+?PR?_DELAYSMG?______________
+  +--> ?PR?_DISPLAYSMG_BIT?______________
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  12/17/2022  01:31:45  PAGE 2
+
+
+
+?PR?_DISPLAYSMG_BIT?______________
+  +--> ?PR?_SELECTHC573?______________
+
+
+
+SYMBOL TABLE OF MODULE:  数码管动态显示 (?C_STARTUP)
+
+  VALUE           TYPE          NAME
+  ----------------------------------
+
+  -------         MODULE        ?C_STARTUP
+  C:0800H         SEGMENT       ?C_C51STARTUP
+  I:0009H         SEGMENT       ?STACK
+  C:0000H         PUBLIC        ?C_STARTUP
+  D:00E0H         SYMBOL        ACC
+  D:00F0H         SYMBOL        B
+  D:0083H         SYMBOL        DPH
+  D:0082H         SYMBOL        DPL
+  N:0000H         SYMBOL        IBPSTACK
+  N:0100H         SYMBOL        IBPSTACKTOP
+  N:0080H         SYMBOL        IDATALEN
+  C:0803H         SYMBOL        IDATALOOP
+  N:0000H         SYMBOL        PBPSTACK
+  N:0100H         SYMBOL        PBPSTACKTOP
+  N:0000H         SYMBOL        PDATALEN
+  N:0000H         SYMBOL        PDATASTART
+  N:0000H         SYMBOL        PPAGE
+  N:0000H         SYMBOL        PPAGEENABLE
+  D:00A0H         SYMBOL        PPAGE_SFR
+  D:0081H         SYMBOL        SP
+  C:0800H         SYMBOL        STARTUP1
+  N:0000H         SYMBOL        XBPSTACK
+  N:0000H         SYMBOL        XBPSTACKTOP
+  N:0000H         SYMBOL        XDATALEN
+  N:0000H         SYMBOL        XDATASTART
+  C:0000H         LINE#         126
+  C:0800H         LINE#         133
+  C:0802H         LINE#         134
+  C:0803H         LINE#         135
+  C:0804H         LINE#         136
+  C:0806H         LINE#         185
+  C:0809H         LINE#         196
+  -------         ENDMOD        ?C_STARTUP
+
+  -------         MODULE        ______________
+  C:0000H         SYMBOL        _ICE_DUMMY_
+  D:0080H         PUBLIC        P0
+  D:0090H         PUBLIC        P1
+  D:00A0H         PUBLIC        P2
+  D:00B0H         PUBLIC        P3
+  C:088CH         PUBLIC        Display_Dynamic
+  D:00A8H         PUBLIC        IE
+  C:08D1H         PUBLIC        _SelectHC573
+  D:00B8H         PUBLIC        IP
+  C:093BH         PUBLIC        main
+  D:0098H         PUBLIC        SCON
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  12/17/2022  01:31:45  PAGE 3
+
+
+  D:0088H         PUBLIC        TCON
+  C:0950H         PUBLIC        SMG_duanma
+  C:0904H         PUBLIC        _DisplaySMG_Bit
+  C:0930H         PUBLIC        _DelaySMG
+  D:00C8H         PUBLIC        T2CON
+  D:0008H         PUBLIC        yu
+  D:00D0H         PUBLIC        PSW
+  -------         PROC          _SELECTHC573
+  D:0007H         SYMBOL        channel
+  C:08D1H         LINE#         9
+  C:08D1H         LINE#         10
+  C:08D1H         LINE#         11
+  C:08E0H         LINE#         12
+  C:08E0H         LINE#         13
+  C:08E0H         LINE#         14
+  C:08E8H         LINE#         15
+  C:08E9H         LINE#         16
+  C:08E9H         LINE#         17
+  C:08F1H         LINE#         18
+  C:08F2H         LINE#         19
+  C:08F2H         LINE#         20
+  C:08FAH         LINE#         21
+  C:08FBH         LINE#         22
+  C:08FBH         LINE#         23
+  C:0903H         LINE#         24
+  C:0903H         LINE#         25
+  C:0903H         LINE#         26
+  -------         ENDPROC       _SELECTHC573
+  -------         PROC          _DISPLAYSMG_BIT
+  D:0006H         SYMBOL        value
+  D:0005H         SYMBOL        pos
+  C:0904H         LINE#         28
+  C:0906H         LINE#         29
+  C:0906H         LINE#         30
+  C:0909H         LINE#         31
+  C:090EH         LINE#         32
+  C:091DH         LINE#         33
+  C:0922H         LINE#         34
+  C:0924H         LINE#         35
+  -------         ENDPROC       _DISPLAYSMG_BIT
+  C:0925H         SYMBOL        L?0020
+  C:0926H         SYMBOL        L?0021
+  C:0929H         SYMBOL        L?0022
+  -------         PROC          L?0019
+  -------         ENDPROC       L?0019
+  C:0925H         SYMBOL        L?0020
+  C:0926H         SYMBOL        L?0021
+  C:0929H         SYMBOL        L?0022
+  -------         PROC          _DELAYSMG
+  D:0006H         SYMBOL        t
+  C:0930H         LINE#         37
+  C:0930H         LINE#         38
+  C:0930H         LINE#         39
+  C:093AH         LINE#         40
+  -------         ENDPROC       _DELAYSMG
+  -------         PROC          DISPLAY_DYNAMIC
+  C:088CH         LINE#         42
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  12/17/2022  01:31:45  PAGE 4
+
+
+  C:088CH         LINE#         43
+  C:088CH         LINE#         44
+  C:0894H         LINE#         45
+  C:0897H         LINE#         46
+  C:089AH         LINE#         47
+  C:089DH         LINE#         48
+  C:089EH         LINE#         49
+  C:08A1H         LINE#         50
+  C:08A4H         LINE#         51
+  C:08A7H         LINE#         53
+  C:08AAH         LINE#         54
+  C:08ADH         LINE#         55
+  C:08ADH         LINE#         56
+  C:08B0H         LINE#         58
+  C:08B9H         LINE#         59
+  C:08BCH         LINE#         60
+  C:08CAH         LINE#         61
+  -------         ENDPROC       DISPLAY_DYNAMIC
+  -------         PROC          MAIN
+  C:093BH         LINE#         73
+  C:093BH         LINE#         74
+  C:093BH         LINE#         75
+  C:093BH         LINE#         76
+  C:093BH         LINE#         77
+  C:093EH         LINE#         78
+  C:0940H         LINE#         79
+  C:094BH         LINE#         80
+  C:094BH         LINE#         81
+  C:094EH         LINE#         82
+  C:094EH         LINE#         84
+  -------         ENDPROC       MAIN
+  -------         ENDMOD        ______________
+
+******************************************************************************
+* RESTRICTED VERSION WITH 0800H BYTE CODE SIZE LIMIT; USED: 00E8H BYTE (11%) *
+******************************************************************************
+
+Program Size: data=10.0 xdata=0 code=361
+LINK/LOCATE RUN COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,478 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              06/09/2023 13:54:11 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.ls
+                    -t) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "main.h"
+   2          
+   3          /*变量定义区*/
+   4          uc Interface;
+   5          uc P_Interface;
+   6          uc KeyNum;
+   7          ui F_temp;
+   8          ui F;
+   9          ui Distance;
+  10          f adc_v;
+  11          uc Humidity;
+  12          uc Relay_count;
+  13          uc F_P=90;//频率参数
+  14          uc H_P=40;//湿度参数
+  15          uc D_P=6;//距离参数
+  16          
+  17          bit Hz_Interface;//(0-Hz，1-KHz)
+  18          bit Cm_Interface;//(0-Cm，1-M)
+  19          bit Key_flag;
+  20          bit Sonic_flag;
+  21          bit ADC_flag;
+  22          bit Write_flag;
+  23          //bit Led_run;
+  24          bit L1_state;
+  25          bit L2_state;
+  26          bit L3_state;
+  27          bit L1_flag;
+  28          bit L2_flag;
+  29          bit L3_flag;
+  30          bit L5_flag;
+  31          bit L6_flag;
+  32          bit Relay_flag;
+  33          bit S7_flag;
+  34          bit PWM_flag;
+  35          bit PWM_state;
+  36          
+  37          /*硬件初始化函数*/
+  38          void Hardware_Init()
+  39          {
+  40   1        LED_Init();
+  41   1        RB_Init();
+  42   1        Timer0Init();
+  43   1        Timer2Init();
+  44   1        Sonic_Init();
+  45   1        
+  46   1      //  Relay_count=AT24C02_ReadByte(0X00);
+  47   1      }
+  48          
+  49          /*任务处理函数*/
+  50          void Task_Processing()
+  51          {
+  52   1        /*超声波测距任务*/
+  53   1        if(Sonic_flag==1)
+  54   1        {
+C51 COMPILER V9.59.0.0   MAIN                                                              06/09/2023 13:54:11 PAGE 2   
+
+  55   2          Sonic_flag=0;
+  56   2          Distance=Sonic_Work();
+  57   2          /*继电器控制功能任务*/
+  58   2          if((Distance/10.0)>D_P && Relay_flag==0)  //单位统一
+  59   2          {
+  60   3            RB_Init();RELAY=1;P2&=0X1F; //吸合
+  61   3            Relay_flag=1;
+  62   3            L6_flag=1;
+  63   3          }
+  64   2          else if((Distance/10.0)<=D_P && Relay_flag==1)
+  65   2          {
+  66   3            RB_Init();RELAY=0;P2&=0X1F; //断开
+  67   3            Relay_flag=0;
+  68   3            L6_flag=0;
+  69   3            Relay_count+=1;
+  70   3            Write_flag=1;
+  71   3          }
+  72   2        }
+  73   1        /*电压采集模拟湿度任务*/
+  74   1        if(ADC_flag==1)
+  75   1        {
+  76   2          ADC_flag=0;
+  77   2          adc_v=PCF8591_ReadAD(1)/255.0*5;
+  78   2          Humidity=adc_v/5.0*100;
+  79   2          /*L5*/
+  80   2          if(Humidity>H_P){L5_flag=1;}
+  81   2          else{L5_flag=0;}
+  82   2          
+  83   2          /*DAC输出功能任务*/
+  84   2          if(Humidity<=H_P){PCF8591_WriteDA(1.0/5*255);}
+  85   2          else if(Humidity>H_P&&Humidity<80)
+  86   2          {
+  87   3            PCF8591_WriteDA((((Humidity-H_P)*(4.0/(80-H_P)))+1)/5.0*255);
+  88   3          }
+  89   2          else if(Humidity>=80){PCF8591_WriteDA(255);}
+  90   2        }
+  91   1        /*EEPROM功能任务*/
+  92   1        if(Write_flag==1)
+  93   1        {
+  94   2          Write_flag=0;
+  95   2          AT24C02_WriteByte(0X00,Relay_count);
+  96   2          Delay5ms();
+  97   2        }
+  98   1        
+  99   1        /*脉冲输出功能任务*/
+ 100   1        if(F>(F_P*100)){PWM_flag=1;}
+ 101   1        else{PWM_flag=0;}
+ 102   1      }
+ 103          
+ 104          void USE_LED()
+ 105          {
+ 106   1        if(Interface==0){L1_flag=1;L2_flag=0;L3_flag=0;L1_state=0;L2_state=0;L3_state=0;}
+ 107   1        else if(Interface==1){L1_flag=0;L2_flag=1;L3_flag=0;L1_state=0;L2_state=0;L3_state=0;}
+ 108   1        else if(Interface==2){L1_flag=0;L2_flag=0;L3_flag=1;L1_state=0;L2_state=0;L3_state=0;}
+ 109   1        else if(Interface==3)
+ 110   1        {
+ 111   2          if(P_Interface==0){L1_state=1;L2_state=0;L3_state=0;}//频率参数界面下
+ 112   2          else if(P_Interface==1){L1_state=0;L2_state=1;L3_state=0;}//湿度参数界面下
+ 113   2          else if(P_Interface==2){L1_state=0;L2_state=0;L3_state=1;}//距离参数界面下
+ 114   2        }
+ 115   1        
+ 116   1        LED_Init();
+C51 COMPILER V9.59.0.0   MAIN                                                              06/09/2023 13:54:11 PAGE 3   
+
+ 117   1        /*界面指示灯*/
+ 118   1        if(L1_flag==1){L1=0;}
+ 119   1        else{L1=1;}
+ 120   1        if(L2_flag==1){L2=0;}
+ 121   1        else{L2=1;}
+ 122   1        if(L3_flag==1){L3=0;}
+ 123   1        else{L3=1;}
+ 124   1        
+ 125   1        
+ 126   1        /*测量指示灯*/
+ 127   1        if(F>(F_P*100)){L4=0;}
+ 128   1        else{L4=1;}
+ 129   1        if(L5_flag==1){L5=0;}
+ 130   1        else{L5=1;}
+ 131   1        if(L6_flag==1){L6=0;}
+ 132   1        else{L6=1;}
+ 133   1        L7=1;
+ 134   1        L8=1;
+ 135   1        
+ 136   1        P2&=0X1F;
+ 137   1      }
+ 138          
+ 139          
+ 140          /*应用按键函数*/
+ 141          void USE_KEY()
+ 142          {
+ 143   1        if(Key_flag==1)
+ 144   1        {
+ 145   2          Key_flag=0;
+ 146   2          KeyNum=KEY();
+ 147   2          /*S4-界面切换按键*/
+ 148   2          if(KeyNum==4)
+ 149   2          {
+ 150   3            Interface++;
+ 151   3            Interface%=4;
+ 152   3            
+ 153   3            P_Interface=0;
+ 154   3          }
+ 155   2          /*S5-参数界面切换按键*/
+ 156   2          if(KeyNum==5)
+ 157   2          {
+ 158   3            if(Interface==3)
+ 159   3            {
+ 160   4              P_Interface++;
+ 161   4              P_Interface%=3;
+ 162   4            }
+ 163   3          }
+ 164   2          /*S6-参数加按键*/
+ 165   2          if(KeyNum==6)
+ 166   2          {
+ 167   3            /*参数界面下*/
+ 168   3            if(Interface==3)
+ 169   3            {
+ 170   4              if(P_Interface==0){F_P+=5;}
+ 171   4              if(P_Interface==1){H_P+=10;}
+ 172   4              if(P_Interface==2){D_P+=1;}
+ 173   4              
+ 174   4              /*范围界定*/
+ 175   4              if(F_P>120){F_P=10;}
+ 176   4              if(H_P>60){H_P=10;}
+ 177   4              if(D_P>12){D_P=1;}
+ 178   4            }
+C51 COMPILER V9.59.0.0   MAIN                                                              06/09/2023 13:54:11 PAGE 4   
+
+ 179   3            /*测距界面下*/
+ 180   3            if(Interface==2)
+ 181   3            {
+ 182   4              Cm_Interface=!Cm_Interface;
+ 183   4            }
+ 184   3          }
+ 185   2          /*S7-(短按)参数减按键*/
+ 186   2          if(KeyNum==7&&S7_flag==0)
+ 187   2          {
+ 188   3            /*参数界面下*/
+ 189   3            if(Interface==3)
+ 190   3            {
+ 191   4              if(P_Interface==0){F_P-=5;}
+ 192   4              if(P_Interface==1){H_P-=10;}
+ 193   4              if(P_Interface==2){D_P-=1;}
+ 194   4              
+ 195   4              /*范围界定*/
+ 196   4              if(F_P<10){F_P=120;}
+ 197   4              if(H_P<10){H_P=60;}
+ 198   4              if(D_P<1){D_P=12;}
+ 199   4            }
+ 200   3            /*频率界面下*/
+ 201   3            if(Interface==0)
+ 202   3            {
+ 203   4              Hz_Interface=!Hz_Interface;
+ 204   4            }
+ 205   3          }
+ 206   2          /*S7-(长按)继电器开关次数清零*/
+ 207   2          if(Cont==7&&S7_flag==1)
+ 208   2          {
+ 209   3            Cont=0;
+ 210   3            Relay_count=0;
+ 211   3            Write_flag=1;
+ 212   3          }
+ 213   2        }
+ 214   1      }
+ 215          /*应用数码管函数*/
+ 216          void USE_SMG()
+ 217          {
+ 218   1        /*频率界面*/
+ 219   1        if(Interface==0)
+ 220   1        {
+ 221   2            Nixie_SetBuf(0,Nodot_SMG[15]);
+ 222   2            Nixie_SetBuf(1,0XFF);
+ 223   2            if(F>99999){Nixie_SetBuf(2,Nodot_SMG[F/100000]);}
+ 224   2            else{Nixie_SetBuf(2,0XFF);}
+ 225   2            if(F>9999){Nixie_SetBuf(3,Nodot_SMG[F/10000%10]);}
+ 226   2            else{Nixie_SetBuf(3,0XFF);}
+ 227   2            if(F>999){Nixie_SetBuf(4,Nodot_SMG[F/1000%10]);}
+ 228   2            else{Nixie_SetBuf(4,0XFF);}
+ 229   2            if(F>99){Nixie_SetBuf(5,Nodot_SMG[F/100%10]);}
+ 230   2            else{Nixie_SetBuf(5,0XFF);}
+ 231   2          if(Hz_Interface==0)
+ 232   2          {
+ 233   3            if(F>9){Nixie_SetBuf(6,Nodot_SMG[F/10%10]);}
+ 234   3            else{Nixie_SetBuf(6,0XFF);}
+ 235   3            Nixie_SetBuf(7,Nodot_SMG[F%10]);
+ 236   3          }
+ 237   2          else
+ 238   2          {
+ 239   3            if(F>9){Nixie_SetBuf(6,dot_SMG[F/10%10]);}
+ 240   3            else{Nixie_SetBuf(6,0XFF);}
+C51 COMPILER V9.59.0.0   MAIN                                                              06/09/2023 13:54:11 PAGE 5   
+
+ 241   3            Nixie_SetBuf(7,Nodot_SMG[F%10]);
+ 242   3          }
+ 243   2        }
+ 244   1        /*湿度界面*/
+ 245   1        else if(Interface==1)
+ 246   1        {
+ 247   2          Nixie_SetBuf(0,0X89);
+ 248   2          Nixie_SetBuf(1,0XFF);
+ 249   2          Nixie_SetBuf(2,0XFF);
+ 250   2          Nixie_SetBuf(3,0XFF);
+ 251   2          Nixie_SetBuf(4,0XFF);
+ 252   2          Nixie_SetBuf(5,0XFF);
+ 253   2          Nixie_SetBuf(6,Nodot_SMG[Humidity/10]);
+ 254   2          Nixie_SetBuf(7,Nodot_SMG[Humidity%10]);
+ 255   2        }
+ 256   1        /*测距界面*/
+ 257   1        else if(Interface==2)
+ 258   1        {
+ 259   2          Nixie_SetBuf(0,Nodot_SMG[10]);
+ 260   2          Nixie_SetBuf(1,0XFF);
+ 261   2          Nixie_SetBuf(2,0XFF);
+ 262   2          Nixie_SetBuf(3,0XFF);
+ 263   2          Nixie_SetBuf(4,0XFF);
+ 264   2          /*测试：继电器吸合次数*/
+ 265   2      //    Nixie_SetBuf(2,Nodot_SMG[Relay_count/10]);
+ 266   2      //    Nixie_SetBuf(3,Nodot_SMG[Relay_count%10]);
+ 267   2          if(Cm_Interface==0)
+ 268   2          {
+ 269   3            if(Distance>99){Nixie_SetBuf(5,Nodot_SMG[Distance/100]);}
+ 270   3            else{Nixie_SetBuf(5,0XFF);}
+ 271   3            if(Distance>9){Nixie_SetBuf(6,Nodot_SMG[Distance/10%10]);}
+ 272   3            else{Nixie_SetBuf(6,0XFF);}
+ 273   3            
+ 274   3            Nixie_SetBuf(7,Nodot_SMG[Distance%10]);
+ 275   3          }
+ 276   2          else
+ 277   2          {
+ 278   3            Nixie_SetBuf(5,dot_SMG[Distance/100]);
+ 279   3            Nixie_SetBuf(6,Nodot_SMG[Distance/10%10]);
+ 280   3            Nixie_SetBuf(7,Nodot_SMG[Distance%10]);
+ 281   3          }
+ 282   2        }
+ 283   1        /*参数界面*/
+ 284   1        else if(Interface==3)
+ 285   1        {
+ 286   2          if(P_Interface==0)
+ 287   2          {
+ 288   3            Nixie_SetBuf(0,0X8C);
+ 289   3            Nixie_SetBuf(1,Nodot_SMG[1]);
+ 290   3            Nixie_SetBuf(2,0XFF);
+ 291   3            Nixie_SetBuf(3,0XFF);
+ 292   3            Nixie_SetBuf(4,0XFF);
+ 293   3            
+ 294   3            if(F_P>99){Nixie_SetBuf(5,Nodot_SMG[F_P/100]);}
+ 295   3            else{Nixie_SetBuf(5,0XFF);}
+ 296   3            if(F_P>9){Nixie_SetBuf(6,dot_SMG[F_P/10%10]);}
+ 297   3            else{Nixie_SetBuf(6,0XFF);}
+ 298   3            Nixie_SetBuf(7,Nodot_SMG[F_P%10]);
+ 299   3          }
+ 300   2          else if(P_Interface==1)
+ 301   2          {
+ 302   3            Nixie_SetBuf(0,0X8C);
+C51 COMPILER V9.59.0.0   MAIN                                                              06/09/2023 13:54:11 PAGE 6   
+
+ 303   3            Nixie_SetBuf(1,Nodot_SMG[2]);
+ 304   3            Nixie_SetBuf(2,0XFF);
+ 305   3            Nixie_SetBuf(3,0XFF);
+ 306   3            Nixie_SetBuf(4,0XFF);
+ 307   3            Nixie_SetBuf(5,0XFF);
+ 308   3            Nixie_SetBuf(6,Nodot_SMG[H_P/10]);
+ 309   3            Nixie_SetBuf(7,Nodot_SMG[H_P%10]);
+ 310   3          }
+ 311   2          else if(P_Interface==2)
+ 312   2          {
+ 313   3            Nixie_SetBuf(0,0X8C);
+ 314   3            Nixie_SetBuf(1,Nodot_SMG[3]);
+ 315   3            Nixie_SetBuf(2,0XFF);
+ 316   3            Nixie_SetBuf(3,0XFF);
+ 317   3            Nixie_SetBuf(4,0XFF);
+ 318   3            Nixie_SetBuf(5,0XFF);
+ 319   3            Nixie_SetBuf(6,dot_SMG[D_P/10]);
+ 320   3            Nixie_SetBuf(7,Nodot_SMG[D_P%10]);
+ 321   3          }
+ 322   2        }
+ 323   1      }
+ 324          /*主函数*/
+ 325          void main()
+ 326          {
+ 327   1        Hardware_Init();
+ 328   1        while(1)
+ 329   1        {
+ 330   2          EA=0;
+ 331   2          USE_LED();
+ 332   2          EA=1;
+ 333   2          Task_Processing();
+ 334   2          USE_SMG();
+ 335   2          USE_KEY();
+ 336   2        }
+ 337   1      }
+ 338          /*中断函数*/
+ 339          void Timer0_Routine(void) interrupt 1
+ 340          {
+ 341   1        F_temp++;
+ 342   1      }
+ 343          
+ 344          void Timer2_Routine(void) interrupt 12
+ 345          {
+ 346   1        static uc Key_count;
+ 347   1        static uc SMG_count;
+ 348   1        static ui F_count;
+ 349   1        static ui Sonic_count;
+ 350   1        static ui ADC_count;
+ 351   1        static ui S7_count;
+ 352   1        static ui L1_count;
+ 353   1        static ui L2_count;
+ 354   1        static ui L3_count;
+ 355   1      //  static uc PWM_count;
+ 356   1        Key_count++;
+ 357   1        if(Key_count==100)
+ 358   1        {
+ 359   2          Key_count=0;
+ 360   2          Key_flag=1;
+ 361   2        }
+ 362   1        SMG_count++;
+ 363   1        if(SMG_count==20)
+ 364   1        {
+C51 COMPILER V9.59.0.0   MAIN                                                              06/09/2023 13:54:11 PAGE 7   
+
+ 365   2          SMG_count=0;
+ 366   2          Nixie_Loop();
+ 367   2        }
+ 368   1        F_count++;
+ 369   1        if(F_count==10000)
+ 370   1        {
+ 371   2          F_count=0;
+ 372   2          F=F_temp;
+ 373   2          F_temp=0;
+ 374   2        }
+ 375   1        Sonic_count++;
+ 376   1        if(Sonic_count==2000)
+ 377   1        {
+ 378   2          Sonic_count=0;
+ 379   2          Sonic_flag=1;
+ 380   2        }
+ 381   1        ADC_count++;
+ 382   1        if(ADC_count==1000)
+ 383   1        {
+ 384   2          ADC_count=0;
+ 385   2          ADC_flag=1;
+ 386   2        }
+ 387   1        if(S7_Press==1)
+ 388   1        {
+ 389   2          S7_count++;
+ 390   2          if(S7_count>=10000)
+ 391   2          {
+ 392   3            S7_count=0;
+ 393   3            S7_flag=1;
+ 394   3          }
+ 395   2        }
+ 396   1        else{S7_count=0;S7_flag=0;}
+ 397   1        if(L1_state==1)
+ 398   1        {
+ 399   2          L1_count++;
+ 400   2          if(L1_count==1000)
+ 401   2          {
+ 402   3            L1_count=0;
+ 403   3            L1_flag=~L1_flag;
+ 404   3          }
+ 405   2        }
+ 406   1        else{L1_count=0;L1_flag=0;}
+ 407   1        if(L2_state==1)
+ 408   1        {
+ 409   2          L2_count++;
+ 410   2          if(L2_count==1000)
+ 411   2          {
+ 412   3            L2_count=0;
+ 413   3            L2_flag=~L2_flag;
+ 414   3          }
+ 415   2        }
+ 416   1        else{L2_count=0;L2_flag=0;}
+ 417   1        if(L3_state==1)
+ 418   1        {
+ 419   2          L3_count++;
+ 420   2          if(L3_count==1000)
+ 421   2          {
+ 422   3            L3_count=0;
+ 423   3            L3_flag=~L3_flag;
+ 424   3          }
+ 425   2        }
+ 426   1        else{L3_count=0;L3_flag=0;}
+C51 COMPILER V9.59.0.0   MAIN                                                              06/09/2023 13:54:11 PAGE 8   
+
+ 427   1        
+ 428   1      //  PWM_count++;
+ 429   1      //  if(PWM_flag==1)
+ 430   1      //  {
+ 431   1      //    if(PWM_count>8){RB_Init();PWM_J36=1;P2&=0X1F;}
+ 432   1      //    else{RB_Init();PWM_J36=0;P2&=0X1F;}
+ 433   1      //  }
+ 434   1      //  else
+ 435   1      //  {
+ 436   1      //    if(PWM_count>=2){RB_Init();PWM_J36=1;P2&=0X1F;}
+ 437   1      //    else{RB_Init();PWM_J36&=0;P2&=0X1F;}
+ 438   1      //  }
+ 439   1      //  PWM_count%=10;
+ 440   1      } 
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2258    ----
+   CONSTANT SIZE    =     32    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     34    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =     18    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

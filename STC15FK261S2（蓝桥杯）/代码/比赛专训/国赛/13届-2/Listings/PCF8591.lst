@@ -1,0 +1,64 @@
+C51 COMPILER V9.59.0.0   PCF8591                                                           06/09/2023 13:48:16 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE PCF8591
+OBJECT MODULE PLACED IN .\Objects\PCF8591.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE PCF8591.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\PCF8
+                    -591.lst) TABS(2) OBJECT(.\Objects\PCF8591.obj)
+
+line level    source
+
+   1          #include "PCF8591.h"
+   2          
+   3          #define PCF8591_ADDR 0X90
+   4          #define AD_AIN1 0X01
+   5          #define AD_AIN3 0X03
+   6          #define DA 0X40
+   7          
+   8          uc PCF8591_ReadAD(bit Channel)
+   9          {
+  10   1        uc Dat;
+  11   1        
+  12   1        I2CStart();
+  13   1        I2CSendByte(PCF8591_ADDR|0X00);
+  14   1        I2CWaitAck();
+  15   1        if(Channel==0){I2CSendByte(AD_AIN1|DA);}
+  16   1        else{I2CSendByte(AD_AIN3|DA);}
+  17   1        I2CWaitAck();
+  18   1        I2CStop();
+  19   1        
+  20   1        I2CStart();
+  21   1        I2CSendByte(PCF8591_ADDR|0X01);
+  22   1        I2CWaitAck();
+  23   1        Dat=I2CReceiveByte();
+  24   1        I2CSendAck(1);
+  25   1        I2CStop();
+  26   1        
+  27   1        return Dat;
+  28   1      }
+  29          
+  30          void PCF8591_WriteDA(uc Dat)
+  31          {
+  32   1        I2CStart();
+  33   1        I2CSendByte(PCF8591_ADDR|0X00);
+  34   1        I2CWaitAck();
+  35   1        I2CSendByte(DA);
+  36   1        I2CWaitAck();
+  37   1        I2CSendByte(Dat);
+  38   1        I2CSendAck(1);
+  39   1        I2CStop();
+  40   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     90    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----       1
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

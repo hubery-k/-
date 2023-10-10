@@ -1,0 +1,17 @@
+<html>
+<body>
+<pre>
+<h1>礦ision Build Log</h1>
+<h2>Project:</h2>
+D:\1\CT107D\CT107D单片机综合训练平台_IAP15\CT107D单片机综合训练平台\CT107D单片机综合训练平台\实验例程_STC90C52RC\14.DS18B20实验-小数点处理处理\DS18B20_2.uvproj
+Project File Date:  09/06/2012
+
+<h2>Output:</h2>
+Build target 'Target 1'
+assembling STARTUP.A51...
+compiling onewire.c...
+compiling ex14.c...
+linking...
+Program Size: data=83.2 xdata=0 code=3051
+creating hex file from "DS18B20_2"...
+"DS18B20_2" - 0 Error(s), 0 Warning(s).

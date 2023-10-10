@@ -1,0 +1,170 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              04/01/2022 18:24:12 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main
+                    -.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          
+   3          sbit L1=P0^0;
+   4          sbit L2=P0^1;
+   5          sbit L8=P0^7;
+   6          
+   7          
+   8          unsigned char code duanma[]={0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0x88,0x83,0xc6,0xa1,0x86,0x
+             -8e};
+   9          
+  10          unsigned char count_Ll2f=0;//L1、L2同时翻转计数
+  11          unsigned char count_L8f=0;//L8闪烁计数
+  12          bit L12_stat=0;
+  13          bit L8_stat=0;
+  14          unsigned char C_L12=0;
+  15          unsigned char C_L8=0;
+  16          //==================================================
+  17          void Select_HC573(unsigned char n,dat)
+  18          {
+  19   1        P0=dat;
+  20   1        switch(n)
+  21   1        {
+  22   2          case 4:P2=(P2&0x1f)|0x80;break;
+  23   2          case 5:P2=(P2&0x1f)|0xa0;break;
+  24   2          case 6:P2=(P2&0x1f)|0xc0;break;
+  25   2          case 7:P2=(P2&0x1f)|0xe0;break;
+  26   2          case 0:P2=(P2&0x1f)|0x00;break;//所有锁存器不选择
+  27   2        }
+  28   1        P2=(P2&0x1f)|0x00;//设置完成，自动关闭所有锁存器
+  29   1      }
+  30          
+  31          void DisplaySMG_ALL()
+  32          {
+  33   1        Select_HC573(6,0xff);
+  34   1        Select_HC573(7,0xff);
+  35   1      }
+  36          
+  37          void Delay(unsigned int t)
+  38          {
+  39   1        while(t--);
+  40   1      }
+  41          
+  42          //=====================定时器==========================
+  43          
+  44          void Init_Timer0()
+  45          {
+  46   1        TMOD=0X01;
+  47   1        TH0=(65535-10000)/256;
+  48   1        TL0=(65535-10000)%256;
+  49   1        
+  50   1        ET0=1;
+  51   1        EA=1;
+  52   1        TR0=1;
+  53   1      }
+C51 COMPILER V9.59.0.0   MAIN                                                              04/01/2022 18:24:12 PAGE 2   
+
+  54          
+  55          void Service_Timer0() interrupt 1
+  56          {
+  57   1        TH0=(65535-10000)/256;
+  58   1        TL0=(65535-10000)%256;
+  59   1        count_Ll2f++;
+  60   1        count_L8f++;
+  61   1        
+  62   1        if(count_Ll2f==100)//定时1s
+  63   1        {
+  64   2          L12_stat=~L12_stat;
+  65   2          C_L12++;
+  66   2          count_Ll2f=0;
+  67   2          if(C_L12>(9*2))
+  68   2          {
+  69   3            C_L12=0;
+  70   3          }
+  71   2        }
+  72   1        if(count_L8f==100)
+  73   1        {
+  74   2          L8_stat=~L8_stat;
+  75   2          C_L8++;
+  76   2          count_L8f=0;
+  77   2          if(C_L8>(99*2))
+  78   2          {
+  79   3            C_L8=0;
+  80   3          }
+  81   2        }
+  82   1        
+  83   1      }
+  84          //=======================SMG========================
+  85          void DisplaySMG_Bit(unsigned char pos,dat)
+  86          {
+  87   1        Select_HC573(6,0x01<<pos);
+  88   1        Select_HC573(7,dat);
+  89   1        
+  90   1        Select_HC573(6,0x01<<pos);
+  91   1        Select_HC573(7,0xff);
+  92   1      }
+  93          
+  94          
+  95          
+  96          void DisplaySMG()
+  97          {
+  98   1        
+  99   1        DisplaySMG_Bit(0,duanma[C_L12/2]);
+ 100   1        Delay(100);
+ 101   1      
+ 102   1        DisplaySMG_Bit(6,duanma[(C_L8/2)/10]);
+ 103   1        Delay(100);
+ 104   1        DisplaySMG_Bit(7,duanma[(C_L8/2)%10]);
+ 105   1        Delay(100);
+ 106   1        
+ 107   1        
+ 108   1        DisplaySMG_ALL();
+ 109   1      }
+ 110          
+ 111          //======================LED=========================
+ 112          void LED_Running()
+ 113          { 
+ 114   1        if(L8_stat==1)
+ 115   1        {
+C51 COMPILER V9.59.0.0   MAIN                                                              04/01/2022 18:24:12 PAGE 3   
+
+ 116   2          Select_HC573(4,0x7f);
+ 117   2        }
+ 118   1        if(L12_stat==1)
+ 119   1        {
+ 120   2          Select_HC573(4,0xfc);
+ 121   2        }
+ 122   1        Delay(50000);
+ 123   1      }
+ 124          //====================设备初始化==================
+ 125          void Init_System()
+ 126          {
+ 127   1        Select_HC573(0,0x00);
+ 128   1        Select_HC573(4,0xff);
+ 129   1        Select_HC573(5,0x00);
+ 130   1        DisplaySMG_ALL();
+ 131   1      }
+ 132          void main()
+ 133          {
+ 134   1        Init_System();
+ 135   1        Init_Timer0();
+ 136   1        while(1)
+ 137   1        {
+ 138   2          LED_Running();
+ 139   2          DisplaySMG();
+ 140   2        }
+ 141   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    378    ----
+   CONSTANT SIZE    =     16    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      4    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      2    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

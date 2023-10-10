@@ -1,0 +1,15 @@
+".\Objects\STARTUP.obj",
+".\Objects\main.obj",
+".\Objects\LED.obj",
+".\Objects\RB.obj",
+".\Objects\Nixie.obj",
+".\Objects\Timer.obj",
+".\Objects\KEY.obj",
+".\Objects\CLOCK.obj",
+".\Objects\DS18B20.obj",
+".\Objects\Delay.obj",
+".\Objects\ds1302.obj",
+".\Objects\onewire.obj" 
+TO ".\Objects\Project" 
+PRINT(".\Listings\Project.m51") RAMSIZE(256) 
+DISABLEWARNING (16) 

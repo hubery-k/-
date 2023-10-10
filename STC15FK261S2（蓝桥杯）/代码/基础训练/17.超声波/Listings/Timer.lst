@@ -1,0 +1,53 @@
+C51 COMPILER V9.59.0.0   TIMER                                                             03/26/2023 10:19:42 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE TIMER
+OBJECT MODULE PLACED IN .\Objects\Timer.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE Timer.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\Timer.
+                    -lst) TABS(2) OBJECT(.\Objects\Timer.obj)
+
+line level    source
+
+   1          #include "Timer.h"
+   2          
+   3          /*Ê¹ÓÃ12MHz¾§Õñ£¬1us¾ÍÊÇÒ»¸ö»úÆ÷ÖÜÆÚ£¨Ê¹ÓÃ12TÄ£Ê½²»±¶ËÙ£©*/
+   4          /*ÔÚ12MHz¾§ÕñÏÂ£¬1¸öÊ±ÖÓÖÜÆÚÊÇ1/12us£¬ÔÚ´«Í³µÄ51µ¥Æ¬»úÖÐ»úÐµÖÜÆÚµÄÊ±ÐòÓÉ12¸öÊ±ÖÓÖÜÆÚ×é³É(12T)£¬Ò»¸ö»úÐµÖÜÆ
+             -Ú¾ÍÊÇ1us¡£
+   5            Èç¹ûÊ¹ÓÃ¶¨Ê±Æ÷1TÄ£Ê½µÄ»°£¬Ò»¸öÊ±ÖÓÖÜÆÚ¾ÍÊÇÒ»¸ö»úÐµÖÜÆÚÎª1/12us£¨ÕâÒ²¾ÍÊÇÎªÊ²Ã´Õâ¿î±È´«Í³51ÔËÐÐËÙ¶È¿ìÁË12±
+             -¶£©*/
+   6            
+   7          void Timer0Init(void)   //0Î¢Ãë@12.000MHz
+   8          {
+   9   1        AUXR &= 0x7F;   //¶¨Ê±Æ÷Ê±ÖÓ12TÄ£Ê½
+  10   1        TMOD &= 0xF0;   //ÉèÖÃ¶¨Ê±Æ÷Ä£Ê½
+  11   1        TL0 = 0x00;   //ÉèÖÃ¶¨Ê±³õÖµ
+  12   1        TH0 = 0x00;   //ÉèÖÃ¶¨Ê±³õÖµ
+  13   1        TF0 = 0;    //Çå³ýTF0±êÖ¾
+  14   1        TR0 = 0;    //¶¨Ê±Æ÷0µÈ´ý¿ªÊ¼¼ÆÊ±
+  15   1        /*²»ÐèÒª´ò¿ªÖÐ¶Ï£¬Ö»ÊÇÀûÓÃ¶¨Ê±Æ÷¼ÆÊ±*/
+  16   1      }
+  17          void Timer1Init(void)   //1ºÁÃë@12.000MHz
+  18          {
+  19   1        AUXR |= 0x40;   //¶¨Ê±Æ÷Ê±ÖÓ1TÄ£Ê½
+  20   1        TMOD &= 0x0F;   //ÉèÖÃ¶¨Ê±Æ÷Ä£Ê½
+  21   1        TL1 = 0x20;   //ÉèÖÃ¶¨Ê±³õÖµ
+  22   1        TH1 = 0xD1;   //ÉèÖÃ¶¨Ê±³õÖµ
+  23   1        TF1 = 0;    //Çå³ýTF1±êÖ¾
+  24   1        TR1 = 1;    //¶¨Ê±Æ÷1¿ªÊ¼¼ÆÊ±
+  25   1        ET1=1;
+  26   1        EA=1;
+  27   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     37    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

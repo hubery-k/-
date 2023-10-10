@@ -1,0 +1,6 @@
+".\Objects\nixie.obj",
+".\Objects\main.obj",
+".\Objects\uart.obj",
+".\Objects\key.obj" 
+TO ".\Objects\zhangyunfei" 
+PRINT(".\Listings\zhangyunfei.m51") RAMSIZE(256) 

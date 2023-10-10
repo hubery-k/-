@@ -1,0 +1,30 @@
+#include "BUZZER.h"
+#include "Nixie.h"
+#include "KEY.h"
+#include "AT24C02.h"
+#include "Delay.h"
+unsigned char code SMG_donot[18]=
+{0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0x88,0x80,0xc6,0xc0,0x86,0x8e,0xbf,0x7f};
+unsigned char code SMG_not[16]=		
+{0x40,0x79,0x24,0x30,0x19,0x12,0x02,0x78,0x00,0x10,0x08,0x03,0x46,0x21,0x06,0x0e};
+
+
+unsigned char Value;
+void main(void)
+{
+	BUZZER_Init();
+	
+	while(1)
+	{
+		if(MatrixKey()>0&&MatrixKey()<16)//存取
+		{
+			AT24C02_WriteByte(0X01,MatrixKey());//写周期最长是5ms，所以每次写入都要加一个5ms的延时
+			Delay5ms();
+		}
+		if(MatrixKey()==16)//读取
+		{
+			Value=AT24C02_ReadByte(0X01);
+			Nixie_show(0,SMG_donot[Value]);
+		}
+	}
+}

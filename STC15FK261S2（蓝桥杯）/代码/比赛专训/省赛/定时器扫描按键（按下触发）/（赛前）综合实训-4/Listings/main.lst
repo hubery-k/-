@@ -1,0 +1,463 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              10/10/2023 21:17:59 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.ls
+                    -t) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "LED.h"
+   2          #include "RB.h"
+   3          #include "Nixie.h"
+   4          #include "Timer.h"
+   5          #include "KEY.h"
+   6          #include "PCF8591.h"
+   7          #include "DS18B20.h"
+   8          #include "CLOCK.h"
+   9          #include "AT24C02.h"
+  10          #include "Delay.h"
+  11          #include <stdio.h>
+  12          #include "UART.h"
+  13          #include "Sonic.h"
+  14          #include <string.h>
+  15          
+  16          
+  17          /*SMG¶ÎÂë:0-F*/
+  18          uc code Nodot_SMG[]={0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0x88,0x83,0xc6,0xa1,0x86,0x8e};  
+  19          uc code dot_SMG[]={0x40,0x79,0x24,0x30,0x19,0x12,0x02,0x78,0x00,0x10,0x08,0x03,0x46,0x21,0x06,0x0e};
+  20          
+  21          /*BCDÂë×ªÊ®½øÖÆ£ºDEC=BCD/16*10+BCD%16*/
+  22          /*Ê®½øÖÆ×ªBCDÂë£ºBCD=DEC/10*16+DEC%10 £¨µÃ³öµÄ½á¹ûÊÇ¸ÃBCDÂëÒÔÊ®½øÖÆÐÎÊ½±íÊ¾¡£ÀýÈç£º20/10*16+20%10=32 ¶þ½øÖ
+             -Æ¾ÍÊÇ0010 0000 BCDÂë¾ÍÊÇ0X20£©*/
+  23          uc Time[3]={0X50,0X59,0X23};  //23Ê±59·Ö50Ãë
+  24          uc Send_Buf[20];
+  25          uc Rec_Buf[15];
+  26          uc KeyNum;
+  27          uc Interface;
+  28          f adc_v;
+  29          f T;
+  30          uc T_p=25;    //ÎÂ¶È²ÎÊý
+  31          uc Num;
+  32          uc Condition;
+  33          ui Distance;
+  34          ui PressCount;
+  35          
+  36          bit Send_flag;
+  37          bit Channel;
+  38          bit AD_flag;
+  39          bit T_flag;
+  40          bit C_flag;
+  41          bit Write_flag;
+  42          bit Read_flag;
+  43          bit Sonic_flag;
+  44          bit LED_Enable=1;
+  45          bit SMG_Enable=1;
+  46          bit L7_flag;
+  47          bit L7_State;
+  48          bit Rec_flag;
+  49          bit Press_flag;
+  50          bit Press_State;
+  51          
+  52          /*Ó²¼þ³õÊ¼»¯º¯Êý*/
+  53          void Hardware_Init()
+C51 COMPILER V9.59.0.0   MAIN                                                              10/10/2023 21:17:59 PAGE 2   
+
+  54          {
+  55   1        LED_Init();   //¹Ø±ÕËùÓÐLED
+  56   1        RB_Init();    //¹Ø±Õ·äÃùÆ÷¡¢¼ÌµçÆ÷
+  57   1        Timer0Init(); //¶¨Ê±Æ÷0³õÊ¼»¯
+  58   1        Uart_Init();    //´®¿Ú£¨Ê¹ÓÃ¶¨Ê±Æ÷2£©³õÊ¼»¯
+  59   1        Sonic_Init(); //³¬Éù²¨£¨Ê¹ÓÃ¶¨Ê±Æ÷1£©³õÊ¼»¯
+  60   1        DS1302_WriteTime(Time); //DS1302Ð´ÈëÊ±¼ä
+  61   1        DS18B20_ConvertT(); //¿ªÊ¼ÎÂ¶È×ª»»
+  62   1        Delay750ms();   //µÈ´ýµÚÒ»´Î³ÌÐòÔËÐÐÇ°ÎÂ¶È×ª»»Íê³É£¨×î´ó750ms£©
+  63   1      }
+  64          
+  65          /*PCF8591Ê¹ÓÃº¯Êý*/
+  66          void USE_PCF8591()
+  67          {
+  68   1        /*50ms¶ÁÈ¡Ò»´ÎµçÑ¹Êý¾Ý*/
+  69   1        if(AD_flag==1)
+  70   1        {
+  71   2          AD_flag=0;
+  72   2          adc_v=PCF8591_ReadAD(Channel)*(5.0/255);
+  73   2          PCF8591_WriteDA(adc_v/5.0*255);
+  74   2        } 
+  75   1      }
+  76          
+  77          /*DS18B20Ê¹ÓÃº¯Êý*/
+  78          void USE_DS18B20()
+  79          {
+  80   1        /*100ms¶ÁÈ¡Ò»´ÎÎÂ¶ÈÊý¾Ý*/
+  81   1        if(T_flag==1)
+  82   1        {
+  83   2          T_flag=0;
+  84   2          DS18B20_ConvertT();
+  85   2          T=DS18B20_ReadT();
+  86   2        }
+  87   1        /*ÎÂ¶ÈÊýÖµÏÈ´óÓÚ²ÎÊýÖµºóÐ¡ÓÚ²ÎÊýÖµÔò¼ÆÊýÖµ¼Ó1*/
+  88   1        switch(Condition)
+  89   1        {
+  90   2          case 0:if(T>T_p){Condition=1;}break;
+  91   2          case 1:if(T<=T_p){Condition=0;Num+=1;}break;
+  92   2        }
+  93   1        
+  94   1        if(T>T_p){L7_flag=1;}
+  95   1        else{L7_flag=0;}
+  96   1      }
+  97          
+  98          /*DS1302Ê¹ÓÃº¯Êý*/
+  99          void USE_DS1302()
+ 100          {
+ 101   1        /*50ms¶ÁÈ¡Ò»´ÎÊ±¼ä*/
+ 102   1        if(C_flag==1)
+ 103   1        {
+ 104   2          C_flag=0;
+ 105   2          DS1302_ReadTime(Time);
+ 106   2        }
+ 107   1      }
+ 108          
+ 109          /*AT24C02Ê¹ÓÃº¯Êý*/
+ 110          void USE_AT24C02()
+ 111          {
+ 112   1        if(Write_flag==1)
+ 113   1        {
+ 114   2          Write_flag=0;
+ 115   2          AT24C02_WriteByte(0X00,Num);  //Ð´×Ö½Ú×î´óÐèÒª5msÊ±¼ä
+C51 COMPILER V9.59.0.0   MAIN                                                              10/10/2023 21:17:59 PAGE 3   
+
+ 116   2          Delay5ms();
+ 117   2        }
+ 118   1        if(Read_flag==1)
+ 119   1        {
+ 120   2          Read_flag=0;
+ 121   2          Num=AT24C02_ReadByte(0X00);
+ 122   2        }
+ 123   1      }
+ 124          
+ 125          /*³¬Éù²¨Ê¹ÓÃº¯Êý*/
+ 126          void USE_Sonic()
+ 127          {
+ 128   1        if(Sonic_flag==1)
+ 129   1        {
+ 130   2          Sonic_flag=0;
+ 131   2          Distance=Sonic_Work();
+ 132   2        }
+ 133   1      }
+ 134          
+ 135          /*´®¿ÚÊ¹ÓÃº¯Êý*/
+ 136          void USE_UART()
+ 137          {
+ 138   1        if(Send_flag==1)
+ 139   1        {
+ 140   2          Send_flag=0;
+ 141   2          if(Interface==0)    //·¢ËÍµçÑ¹Êý¾Ý
+ 142   2          {
+ 143   3            sprintf(Send_Buf,"V:%.2f V\r\n",adc_v);
+ 144   3            Uart_SendString(Send_Buf);
+ 145   3          }
+ 146   2          else if(Interface==1)   //·¢ËÍÎÂ¶ÈÊý¾Ý
+ 147   2          {
+ 148   3            sprintf(Send_Buf,"T:%.2f ¡æ\r\n",T);
+ 149   3            Uart_SendString(Send_Buf);
+ 150   3          }
+ 151   2          else if(Interface==2)   //·¢ËÍµ±Ç°Ê±¼äÊý¾Ý
+ 152   2          {
+ 153   3            sprintf(Send_Buf,"%x h  ",Time[2]);
+ 154   3            Uart_SendString(Send_Buf);
+ 155   3            sprintf(Send_Buf,"%x m  ",Time[1]);
+ 156   3            Uart_SendString(Send_Buf);
+ 157   3            sprintf(Send_Buf,"%x s\r\n",Time[0]);
+ 158   3            Uart_SendString(Send_Buf);
+ 159   3          }
+ 160   2          else if(Interface==3)   //·¢ËÍ³¬Éù²¨²â¾àÊý¾Ý
+ 161   2          {
+ 162   3            sprintf(Send_Buf,"C:%d cm\r\n",Distance);
+ 163   3            Uart_SendString(Send_Buf);
+ 164   3          }
+ 165   2        }
+ 166   1        
+ 167   1        if(Rec_flag==1)
+ 168   1        {
+ 169   2          Rec_flag=0;
+ 170   2          
+ 171   2          if(strcmp(Rec_Buf,"LED_Close")==0)
+ 172   2          {
+ 173   3            LED_Enable=0;
+ 174   3            Uart_SendString("LED_Close_Ok!\r\n");
+ 175   3          }
+ 176   2          else if(strcmp(Rec_Buf,"LED_Open")==0)
+ 177   2          {
+C51 COMPILER V9.59.0.0   MAIN                                                              10/10/2023 21:17:59 PAGE 4   
+
+ 178   3            LED_Enable=1;
+ 179   3            Uart_SendString("LED_Open_Ok!\r\n");
+ 180   3          }
+ 181   2          else if(strcmp(Rec_Buf,"SMG_Open")==0)
+ 182   2          {
+ 183   3            SMG_Enable=1;
+ 184   3            Uart_SendString("SMG_Open_Ok!\r\n");
+ 185   3          }
+ 186   2          else if(strcmp(Rec_Buf,"SMG_Close")==0)
+ 187   2          {
+ 188   3            SMG_Enable=0;
+ 189   3            Uart_SendString("SMG_Close_Ok!\r\n");
+ 190   3          }
+ 191   2        }
+ 192   1      }
+ 193          
+ 194          /*LEDÊ¹ÓÃº¯Êý*/
+ 195          void USE_LED()
+ 196          {
+ 197   1        LED_Init();
+ 198   1        if(LED_Enable==1)
+ 199   1        {
+ 200   2          if(Interface==0){L1=0;L2=1;L3=1;L4=1;L5=1;}
+ 201   2          else if(Interface==1){L1=1;L2=0;L3=1;L4=1;L5=1;}
+ 202   2          else if(Interface==2){L1=1;L2=1;L3=0;L4=1;L5=1;}
+ 203   2          else if(Interface==3){L1=1;L2=1;L3=1;L4=0;L5=1;}
+ 204   2          else if(Interface==4){L1=1;L2=1;L3=1;L4=1;L5=0;}
+ 205   2          
+ 206   2          if(Channel==1){L6=0;}
+ 207   2          else{L6=1;}
+ 208   2          if(L7_State==1){L7=0;}
+ 209   2          else{L7=1;}
+ 210   2        }
+ 211   1        else{LED_Control(0XFF);}
+ 212   1        P2&=0X1F;
+ 213   1      }
+ 214          
+ 215          /*°´¼üÊ¹ÓÃº¯Êý*/
+ 216          void USE_KEY()
+ 217          {
+ 218   1        KeyNum=KEY();
+ 219   1        if(KeyNum==4) //S4-½çÃæÇÐ»»
+ 220   1        {
+ 221   2          Interface++;
+ 222   2          if(Interface==5){Interface=0;}
+ 223   2        }
+ 224   1        
+ 225   1        if(KeyNum==5){if(Interface==0){Channel=~Channel;}}  //S8-AD²É¼¯Í¨µÀÇÐ»»
+ 226   1        if(KeyNum==6){LED_Enable=~LED_Enable;}
+ 227   1        if(KeyNum==7){SMG_Enable=~SMG_Enable;}
+ 228   1        
+ 229   1        if(KeyNum==8){Num=0;}   //NumÇåÁã
+ 230   1        if(KeyNum==9){Write_flag=1;}    //Ð´ÈëEEPROM
+ 231   1        if(KeyNum==10){Read_flag=1;}    //´ÓEEPROMÖÐ¶ÁÈ¡
+ 232   1        if(KeyNum==11){Send_flag=1;}    //ÍùÉÏÎ»»ú·¢ËÍÊý¾Ý
+ 233   1        
+ 234   1        if(Cont&0X28){Press_flag=1;}
+ 235   1        else{Press_flag=0;}
+ 236   1        
+ 237   1        if(Press_State==1){T_p+=1;PressCount=0;Press_State=0;}//³¤°´1sÎÂ¶È²ÎÊý¼Ó1
+ 238   1      }
+ 239          
+C51 COMPILER V9.59.0.0   MAIN                                                              10/10/2023 21:17:59 PAGE 5   
+
+ 240          /*ÊýÂë¹ÜÊ¹ÓÃº¯Êý*/
+ 241          void USE_SMG()
+ 242          {
+ 243   1        if(SMG_Enable==1)
+ 244   1        {
+ 245   2          if(Interface==0)
+ 246   2          {
+ 247   3            Nixie_SetBuf(0,0XC1); //±êÊ¶·û-U
+ 248   3            Nixie_SetBuf(1,Nodot_SMG[Channel]);
+ 249   3            Nixie_SetBuf(2,0XFF);
+ 250   3            Nixie_SetBuf(3,0XFF);
+ 251   3            Nixie_SetBuf(4,0XFF);
+ 252   3            Nixie_SetBuf(5,dot_SMG[((ui)(adc_v*100))/100]);
+ 253   3            Nixie_SetBuf(6,Nodot_SMG[((ui)(adc_v*100))/10%10]);
+ 254   3            Nixie_SetBuf(7,Nodot_SMG[((ui)(adc_v*100))%10]);
+ 255   3          }
+ 256   2          else if(Interface==1)
+ 257   2          {
+ 258   3            Nixie_SetBuf(0,0XC8); //±êÊ¶·û-n
+ 259   3            Nixie_SetBuf(1,0XFF);
+ 260   3            Nixie_SetBuf(2,0XFF);
+ 261   3            Nixie_SetBuf(3,0XFF);
+ 262   3            Nixie_SetBuf(4,0XFF);
+ 263   3            Nixie_SetBuf(5,Nodot_SMG[(uc)T/10]);
+ 264   3            Nixie_SetBuf(6,dot_SMG[(uc)T%10]);
+ 265   3            Nixie_SetBuf(7,Nodot_SMG[(uc)(T*10)%10]);
+ 266   3          }
+ 267   2          else if(Interface==2)
+ 268   2          {
+ 269   3            Nixie_SetBuf(0,Nodot_SMG[Time[2]/16]);
+ 270   3            Nixie_SetBuf(1,Nodot_SMG[Time[2]%16]);
+ 271   3            Nixie_SetBuf(2,0XBF);
+ 272   3            Nixie_SetBuf(3,Nodot_SMG[Time[1]/16]);
+ 273   3            Nixie_SetBuf(4,Nodot_SMG[Time[1]%16]);
+ 274   3            Nixie_SetBuf(5,0XBF);
+ 275   3            Nixie_SetBuf(6,Nodot_SMG[Time[0]/16]);
+ 276   3            Nixie_SetBuf(7,Nodot_SMG[Time[0]%16]);
+ 277   3          }
+ 278   2          else if(Interface==3)
+ 279   2          {
+ 280   3            Nixie_SetBuf(0,Nodot_SMG[12]);  //±êÊ¶·û-C
+ 281   3            Nixie_SetBuf(1,0XFF);
+ 282   3            Nixie_SetBuf(2,0XFF);
+ 283   3            Nixie_SetBuf(3,0XFF);
+ 284   3            Nixie_SetBuf(4,0XFF);
+ 285   3            Nixie_SetBuf(5,Nodot_SMG[Distance/100]);
+ 286   3            Nixie_SetBuf(6,Nodot_SMG[Distance/10%10]);
+ 287   3            Nixie_SetBuf(7,Nodot_SMG[Distance%10]);
+ 288   3          }
+ 289   2          else if(Interface==4)
+ 290   2          {
+ 291   3            /*SMG0-3ÏÔÊ¾NumÊýÖµ*/
+ 292   3            Nixie_SetBuf(0,0XC8);
+ 293   3            Nixie_SetBuf(1,0XBF);
+ 294   3            if(Num>9){Nixie_SetBuf(2,Nodot_SMG[Num/10]);}
+ 295   3            else{Nixie_SetBuf(2,0XFF);}
+ 296   3            Nixie_SetBuf(3,Nodot_SMG[Num%10]);
+ 297   3            /*SMG4-7ÏÔÊ¾ÎÂ¶È²ÎÊý*/
+ 298   3            Nixie_SetBuf(4,0X8C);
+ 299   3            Nixie_SetBuf(5,0XBF);
+ 300   3            if(T_p>9){Nixie_SetBuf(6,Nodot_SMG[T_p/10]);}
+ 301   3            else{Nixie_SetBuf(6,0XFF);}
+C51 COMPILER V9.59.0.0   MAIN                                                              10/10/2023 21:17:59 PAGE 6   
+
+ 302   3            Nixie_SetBuf(7,Nodot_SMG[T_p%10]);
+ 303   3          }
+ 304   2        }
+ 305   1        else
+ 306   1        {
+ 307   2          Nixie_SetBuf(0,0XFF);Nixie_SetBuf(1,0XFF);Nixie_SetBuf(2,0XFF);Nixie_SetBuf(3,0XFF);
+ 308   2          Nixie_SetBuf(4,0XFF);Nixie_SetBuf(5,0XFF);Nixie_SetBuf(6,0XFF);Nixie_SetBuf(7,0XFF);
+ 309   2        }
+ 310   1      
+ 311   1      }
+ 312          
+ 313          void main(void)
+ 314          {
+ 315   1        Hardware_Init();
+ 316   1        while(1)
+ 317   1        {
+ 318   2          EA=0;
+ 319   2          USE_LED();
+ 320   2          EA=1;
+ 321   2          USE_PCF8591();
+ 322   2          USE_DS18B20();
+ 323   2          USE_DS1302();
+ 324   2          USE_AT24C02();
+ 325   2          USE_KEY();
+ 326   2          USE_SMG();
+ 327   2          USE_Sonic();
+ 328   2          USE_UART();
+ 329   2        }
+ 330   1      }
+ 331          
+ 332          void Timer0_Routine(void) interrupt 1
+ 333          {
+ 334   1        static uc T0_Count1;
+ 335   1        static uc T0_Count2;
+ 336   1        static uc AD_Count;
+ 337   1        static uc T_Count;
+ 338   1        static uc C_Count;
+ 339   1        static uc Sonic_Count;
+ 340   1        static uc L7_Count;
+ 341   1        
+ 342   1        
+ 343   1        T0_Count1++;
+ 344   1        if(T0_Count1==2)
+ 345   1        {
+ 346   2          T0_Count1=0;
+ 347   2          Nixie_Loop();
+ 348   2        }
+ 349   1        T0_Count2++;
+ 350   1        if(T0_Count2==10)
+ 351   1        {
+ 352   2          T0_Count2=0;
+ 353   2          KEY_Loop();
+ 354   2        }
+ 355   1        AD_Count++;
+ 356   1        if(AD_Count==50)
+ 357   1        {
+ 358   2          AD_Count=0;
+ 359   2          AD_flag=1;
+ 360   2        }
+ 361   1        C_Count++;
+ 362   1        if(C_Count==50)
+ 363   1        {
+C51 COMPILER V9.59.0.0   MAIN                                                              10/10/2023 21:17:59 PAGE 7   
+
+ 364   2          C_Count=0;
+ 365   2          C_flag=1;
+ 366   2        }
+ 367   1        T_Count++;
+ 368   1        if(T_Count==100)
+ 369   1        {
+ 370   2          T_Count=0;
+ 371   2          T_flag=1;
+ 372   2        }
+ 373   1        Sonic_Count++;
+ 374   1        if(Sonic_Count==200)
+ 375   1        {
+ 376   2          Sonic_Count=0;
+ 377   2          Sonic_flag=1;
+ 378   2        }
+ 379   1        
+ 380   1        if(L7_flag==1)
+ 381   1        {
+ 382   2          L7_Count++;
+ 383   2          if(L7_Count==100)
+ 384   2          {
+ 385   3            L7_Count=0;
+ 386   3            L7_State=~L7_State;
+ 387   3          }
+ 388   2        }
+ 389   1        else{L7_Count=0;L7_State=0;}
+ 390   1        
+ 391   1        if(Press_flag==1)
+ 392   1        {
+ 393   2          PressCount++;
+ 394   2          if(PressCount>=1000)
+ 395   2          {
+ 396   3            PressCount=0;
+ 397   3            Press_State=1;
+ 398   3          }
+ 399   2        }
+ 400   1        else{PressCount=0;Press_State=0;}
+ 401   1        
+ 402   1      }
+ 403          
+ 404          /*×¢ÒâÊÂÏî£º´ò¿ª´®¿ÚÖÐ¶ÏÒ»¶¨Òª±àÐ´´®¿ÚÖÐ¶Ïº¯Êý¡£·ñÔò³ÌÐò»á¿¨ËÀ¡£¾ßÌåÔ­ÒòÄ¿Ç°Ã»ÓÐÕÒµ½*/
+ 405          void Uart_Routine(void) interrupt 4
+ 406          {
+ 407   1        uc temp;
+ 408   1        static uc i;
+ 409   1        if(RI==1)
+ 410   1        {
+ 411   2          RI=0;
+ 412   2          temp=SBUF;
+ 413   2          if(temp=='\r'||temp=='\n')
+ 414   2          {
+ 415   3            Rec_flag=1; //±íÊ¾Êý¾Ý½ÓÊÕÍê
+ 416   3            Rec_Buf[i] = '\0';
+ 417   3            i=0;
+ 418   3          }
+ 419   2          else
+ 420   2          {
+ 421   3            Rec_Buf[i++]=temp;
+ 422   3          }
+ 423   2        }
+ 424   1      }
+
+C51 COMPILER V9.59.0.0   MAIN                                                              10/10/2023 21:17:59 PAGE 8   
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1901    ----
+   CONSTANT SIZE    =    186    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     63    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =     15    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

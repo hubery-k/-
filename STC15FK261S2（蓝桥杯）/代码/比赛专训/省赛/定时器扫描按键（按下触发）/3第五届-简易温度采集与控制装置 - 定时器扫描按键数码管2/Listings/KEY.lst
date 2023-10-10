@@ -1,0 +1,83 @@
+C51 COMPILER V9.59.0.0   KEY                                                               04/07/2023 22:14:33 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\KEY.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE KEY.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\KEY.lst)
+                    - TABS(2) OBJECT(.\Objects\KEY.obj)
+
+line level    source
+
+   1          #include "KEY.h"
+   2          
+   3          #define set(x) P4=(x>>3|x>>4);P3=x
+   4          #define get() ((P4&0X10)<<3)|((P4&0X04)<<4)|(P3&0X3F)
+   5          
+   6          unsigned char Trg,Cont;
+   7          static unsigned char KeyNum;
+   8          
+   9          void KBD()
+  10          {
+  11   1        unsigned char Dat;
+  12   1        set(0X0F);
+  13   1        Dat=get();
+  14   1        set(0xF0);
+  15   1        Dat=(Dat|get())^0XFF;
+  16   1        Trg=Dat&(Dat^Cont);   //±£Ö¤°´ÏÂÖ»´¥·¢Ò»´Î
+  17   1        Cont=Dat;   //¼Ç×¡°´ÏÂµÄ×´Ì¬
+  18   1      }
+  19          
+  20          void KEY_Loop(void)
+  21          {
+  22   1        KBD();
+  23   1        switch(Trg ^ 0xFF)
+  24   1        {
+  25   2          case 0x77:KeyNum=9;break;
+  26   2          case 0x7b:KeyNum=6;break;
+  27   2          case 0x7d:KeyNum=3;break;
+  28   2          case 0x7e:KeyNum=0;break;
+  29   2          
+  30   2          case 0xb7:KeyNum=10;break;
+  31   2          case 0xbb:KeyNum=7;break;
+  32   2          case 0xbd:KeyNum=4;break;
+  33   2          case 0xbe:KeyNum=1;break;
+  34   2          
+  35   2          case 0xd7:KeyNum=11;break;
+  36   2          case 0xdb:KeyNum=8;break;
+  37   2          case 0xdd:KeyNum=5;break;
+  38   2          case 0xde:KeyNum=2;break;
+  39   2        }
+  40   1      }
+  41          
+  42          unsigned char KEY()
+  43          {
+  44   1        unsigned char Temp;
+  45   1        Temp=KeyNum;
+  46   1        KeyNum=20;    //20Ã»ÓĞ¶ÔÓ¦Ê¹ÓÃµÄ¼üÖµ
+  47   1        return Temp;
+  48   1      }
+  49          
+  50          /*ÈıĞĞ´úÂë½âÊÍ£º
+  51            £¨1£©Ã»ÓĞ°´¼ü°´ÏÂ£ºdat=0;Cont=0;Trg=0;
+  52            £¨2£©µ±S7°´¼ü°´ÏÂ£ºKEYPORT=0XFE;dat=0X01;Trg=0X01&(0X01^0X00)=0X01;Cont=0X01;
+  53            £¨3£©µ±S7°´¼ü³ÖĞø°´ÏÂ£ºTrgÔÚµÚÒ»¸öÉ¨ÃèÖÜÆÚµÈÓÚ0X01£¬ÔÚµÚ¶ş¸öÉ¨ÃèÖÜÆÚºóTrg=0±ä»ØÁËÔ­×´Ì¬(ÎªÁË°´ÏÂ²»¶à´Î´¥·
+             -¢);
+C51 COMPILER V9.59.0.0   KEY                                                               04/07/2023 22:14:33 PAGE 2   
+
+  54                  Cont=0X01Cont×´Ì¬Ã»ÓĞÏû³ı±íÊ¾°´¼ü³ÖĞø°´ÏÂ¡£
+  55            £¨4£©µ±S7°´¼üËÉ¿ª£ºTrg=0X00(0X00^0X01)=0;Cont=0;
+  56          */
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    175    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

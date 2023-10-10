@@ -1,0 +1,52 @@
+C51 COMPILER V9.59.0.0   TIMER                                                             04/07/2023 23:56:40 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE TIMER
+OBJECT MODULE PLACED IN .\Objects\Timer.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE Timer.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\Timer.
+                    -lst) TABS(2) OBJECT(.\Objects\Timer.obj)
+
+line level    source
+
+   1          #include "Timer.h"
+   2          
+   3          void Timer0Init(void)   //1ºÁÃë@12.000MHz
+   4          {
+   5   1        AUXR |= 0x80;   //¶¨Ê±Æ÷Ê±ÖÓ1TÄ£Ê½
+   6   1        TMOD &= 0xF0;   //ÉèÖÃ¶¨Ê±Æ÷Ä£Ê½
+   7   1        TL0 = 0x20;   //ÉèÖÃ¶¨Ê±³õÊ¼Öµ
+   8   1        TH0 = 0xD1;   //ÉèÖÃ¶¨Ê±³õÊ¼Öµ
+   9   1        TF0 = 0;    //Çå³ýTF0±êÖ¾
+  10   1        TR0 = 1;    //¶¨Ê±Æ÷0¿ªÊ¼¼ÆÊ±
+  11   1        
+  12   1        ET0=1;
+  13   1        EA=1;
+  14   1      }
+  15          
+  16          /*ÔÚ12MHz¾§ÕñÏÂ£¬1¸öÊ±ÖÓÖÜÆÚÊÇ1/12us£¬ÔÚ´«Í³µÄ51µ¥Æ¬»úÖÐ»úÐµÖÜÆÚµÄÊ±ÐòÓÉ12¸öÊ±ÖÓÖÜÆÚ×é³É(12T)£¬Ò»¸ö»úÐµÖÜÆ
+             -Ú¾ÍÊÇ1us¡£
+  17            Èç¹ûÊ¹ÓÃ¶¨Ê±Æ÷1TÄ£Ê½µÄ»°£¬Ò»¸öÊ±ÖÓÖÜÆÚ¾ÍÊÇÒ»¸ö»úÐµÖÜÆÚÎª1/12us£¨ÕâÒ²¾ÍÊÇÎªÊ²Ã´Õâ¿î±È´«Í³51ÔËÐÐËÙ¶È¿ìÁË12±
+             -¶£©*/
+  18          void Timer1Init(void)   //0Î¢Ãë@12.000MHz
+  19          {
+  20   1        AUXR &= 0xBF;   //¶¨Ê±Æ÷Ê±ÖÓ12TÄ£Ê½
+  21   1        TMOD &= 0x0F;   //ÉèÖÃ¶¨Ê±Æ÷Ä£Ê½
+  22   1        TL1 = 0x00;   //ÉèÖÃ¶¨Ê±³õÖµ
+  23   1        TH1 = 0x00;   //ÉèÖÃ¶¨Ê±³õÖµ
+  24   1        TF1 = 0;    //Çå³ýTF1±êÖ¾
+  25   1        TR1 = 0;    //¶¨Ê±Æ÷1µÈ´ý¿ªÊ¼¼ÆÊ±
+  26   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     37    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,1 @@
+"BSP\src\Ds1302_Clcok.c" OPTIMIZE (8,SPEED) BROWSE INCDIR(.\BSP\inc;.\TOOL\inc) DEBUG OBJECTEXTEND PRINT(.\Listings\Ds1302_Clcok.lst) TABS (2) OBJECT(.\Objects\Ds1302_Clcok.obj)

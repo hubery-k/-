@@ -1,0 +1,100 @@
+C51 COMPILER V9.59.0.0   UART                                                              12/25/2022 23:52:08 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE UART
+OBJECT MODULE PLACED IN .\Objects\UART.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE BSP\src\UART.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\BSP\inc;.\TOOL\inc) DEBUG 
+                    -OBJECTEXTEND PRINT(.\Listings\UART.lst) TABS(2) OBJECT(.\Objects\UART.obj)
+
+line level    source
+
+   1          #include "UART.h"
+   2          
+   3          
+   4            /*一般来说，单片机给发送上位机发送数据，上位机可以实时接收，但如果上位机给单片机发送数据
+   5            单片机此时正处于while循环中处理其他程序那么数据就接收不到了，所以接收数据需要串口中断
+   6            当然也可以利用查询方式在while循环中不断查询是否有数据发送过来，当然这比较浪费CPU资源。*/
+   7          
+   8          /******************串口1**********************/
+   9          /*串口1默认位置是P30和P31，可以通过PWS_1寄存器在P30、P31和P36、P37和P16、P17之间进行引脚切换。
+  10          蓝桥杯开发板上自带的CH340下载电路上连接的是P30和P31引脚，所以串口1配置完后可以直接与串口助手进行通信。*/
+  11          void UART_Init(void)    //9600bps@11.0592MHz
+  12          {
+  13   1        SCON = 0x50;    //8位数据,可变波特率(且开启了REN使能位)
+  14   1        AUXR &= 0xBF;   //定时器时钟12T模式
+  15   1        AUXR &= 0xFE;   //串口1选择定时器1为波特率发生器
+  16   1        TMOD &= 0x0F;   //设置定时器模式
+  17   1        TL1 = 0xE8;   //设置定时初始值
+  18   1        TH1 = 0xFF;   //设置定时初始值
+  19   1        ET1 = 0;    //禁止定时器%d中断
+  20   1        TR1 = 1;    //定时器1开始计时
+  21   1        
+  22   1        //清除中断标志位
+  23   1        RI=0;
+  24   1        //开中断
+  25   1        ES=1;
+  26   1        EA=1;
+  27   1      }
+  28          void UART_SendByte(unsigned char Byte)
+  29          {
+  30   1        SBUF=Byte;
+  31   1        while(TI==0);//等待数据发送完成TI由硬件置1
+  32   1        TI=0;//需要软件清零
+  33   1      }
+  34          
+  35          
+  36          
+  37          /******************串口2**********************/
+  38          /*由于蓝桥杯单片机上串口下载的位置是P30和P31该位置是串口1的默认位置，所以配置串口1可以通过串口助手进行通信
+             -。
+  39          而串口2默认位置是P10和P11，通过P_SW2寄存器在P46、P47和P10、P11之间切换。
+  40          所以想要通过串口2通信需要另外连接CH340驱动芯片。*/
+  41          /*
+  42          void UART_Init(void)    //9600bps@11.0592MHz
+  43          {
+  44            S2CON = 0x50;   //8位数据,可变波特率
+  45            AUXR &= 0xFB;   //定时器时钟12T模式
+  46            T2L = 0xE8;   //设置定时初始值
+  47            T2H = 0xFF;   //设置定时初始值
+  48            AUXR |= 0x10;   //定时器2开始计时
+  49            
+  50            //清除中断标志位
+  51            S2CON&=~0X01;
+  52            //开中断
+  53            IE2|=0X01;//开启ES2;（IE2不可位寻址）
+C51 COMPILER V9.59.0.0   UART                                                              12/25/2022 23:52:08 PAGE 2   
+
+  54            EA=1;
+  55          }
+  56          
+  57          void UART_SendByte(unsigned char Byte)
+  58          {
+  59            S2BUF=Byte;
+  60            while((S2CON&0X02)==0);//等待数据发送完成TI由硬件置1
+  61            S2CON&=~0X02;//需要软件清零
+  62          }
+  63          
+  64          void UART_Routine(void) interrupt 8
+  65          {
+  66            if(S2CON&0X01)
+  67            {
+  68              Data=S2BUF;
+  69              UART_SendByte(Data);
+  70              S2CON&=~0X01;
+  71            }
+  72          }
+  73          */
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     37    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

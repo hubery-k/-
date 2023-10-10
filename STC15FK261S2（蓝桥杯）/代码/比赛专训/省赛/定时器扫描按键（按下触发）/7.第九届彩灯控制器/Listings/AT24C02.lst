@@ -1,0 +1,59 @@
+C51 COMPILER V9.59.0.0   AT24C02                                                           04/07/2023 22:44:25 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE AT24C02
+OBJECT MODULE PLACED IN .\Objects\AT24C02.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE AT24C02.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\AT24
+                    -C02.lst) TABS(2) OBJECT(.\Objects\AT24C02.obj)
+
+line level    source
+
+   1          #include "AT24C02.h"
+   2          
+   3          /*注意！！！：AT24C02一个地址最大只能存取256。想要存取超过256的数可以分两个地址存储*/
+   4          void AT24C02_WriteByte(uc Addr, Data)
+   5          {
+   6   1        IIC_Start();
+   7   1        IIC_SendByte(AT24C02_ADDRESS|0X00);
+   8   1        IIC_WaitAck();
+   9   1        IIC_SendByte(Addr);
+  10   1        IIC_WaitAck();
+  11   1        IIC_SendByte(Data);
+  12   1        IIC_WaitAck();
+  13   1        IIC_Stop();
+  14   1      }
+  15          
+  16          
+  17          uc AT24C02_ReadByte(uc Addr)
+  18          {
+  19   1        uc Data;
+  20   1        IIC_Start();
+  21   1        IIC_SendByte(AT24C02_ADDRESS|0X00);
+  22   1        IIC_WaitAck();
+  23   1        IIC_SendByte(Addr);
+  24   1        IIC_WaitAck();
+  25   1        IIC_Stop();
+  26   1        
+  27   1        IIC_Start();
+  28   1        IIC_SendByte(AT24C02_ADDRESS|0X01);   //重新指定方向为读方向
+  29   1        IIC_WaitAck();
+  30   1        Data=IIC_RecByte();
+  31   1        IIC_SendAck(1);   //发送非应答表示结束
+  32   1        IIC_Stop();
+  33   1      
+  34   1        return Data;
+  35   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     87    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       5
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

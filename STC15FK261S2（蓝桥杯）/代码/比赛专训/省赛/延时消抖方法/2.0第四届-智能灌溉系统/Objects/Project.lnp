@@ -1,0 +1,16 @@
+".\Objects\STARTUP.obj",
+".\Objects\main.obj",
+".\Objects\RELAY.obj",
+".\Objects\BUZZER.obj",
+".\Objects\KEY.obj",
+".\Objects\LED.obj",
+".\Objects\EEPROM.obj",
+".\Objects\Nixie.obj",
+".\Objects\AD.obj",
+".\Objects\Clock.obj",
+".\Objects\ds1302.obj",
+".\Objects\iic.obj",
+".\Objects\Delay.obj" 
+TO ".\Objects\Project" 
+PRINT(".\Listings\Project.m51") RAMSIZE(256) 
+DISABLEWARNING (16) 

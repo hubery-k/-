@@ -1,0 +1,104 @@
+C51 COMPILER V9.59.0.0   KEY                                                               10/10/2023 21:17:59 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\KEY.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE KEY.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\KEY.lst)
+                    - TABS(2) OBJECT(.\Objects\KEY.obj)
+
+line level    source
+
+   1          #include "KEY.h"
+   2          
+   3          
+   4          /*¶ÀÁ¢°´¼üBTN*/
+   5          //static uc KeyNum;
+   6          //uc Trg,Cont;
+   7          
+   8          //void BTN()
+   9          //{
+  10          //  uc Dat;
+  11          //  Dat=P3^0XFF;
+  12          //  Trg=Dat&(Dat^Cont);
+  13          //  Cont=Dat;
+  14          //}
+  15          
+  16          //void KEY_Loop()
+  17          //{
+  18          //  BTN();
+  19          //  if(Trg&0X01){KeyNum=7;}
+  20          //  if(Trg&0X02){KeyNum=6;}
+  21          //  if(Trg&0X04){KeyNum=5;}
+  22          //  if(Trg&0X08){KeyNum=4;}
+  23          //}
+  24          
+  25          //uc KEY()
+  26          //{
+  27          //  uc Temp;
+  28          //  Temp=KeyNum;
+  29          //  KeyNum=0;
+  30          //  return Temp;
+  31          //}
+  32          
+  33          /*¾ØÕó°´¼üKBD*/
+  34          #define set(x) P4=(x>>3)|(x>>4);P3=x
+  35          #define get() ((P4&0X04)<<4)|((P4&0X10)<<3)|(P3&0X3F)
+  36          
+  37          static uc KeyNum;
+  38          uc Trg,Cont;
+  39          void KBD()
+  40          {
+  41   1        uc Dat;
+  42   1        set(0X0F);
+  43   1        Dat=get();
+  44   1        set(0XF0);
+  45   1        Dat=(Dat|get())^0XFF;
+  46   1        Trg=Dat&(Dat^Cont);
+  47   1        Cont=Dat;
+  48   1      }
+  49          
+  50          void KEY_Loop()
+  51          {
+  52   1        KBD();
+  53   1        AUXR &= ~0x10;
+  54   1        switch(Trg^0XFF)
+C51 COMPILER V9.59.0.0   KEY                                                               10/10/2023 21:17:59 PAGE 2   
+
+  55   1        {
+  56   2          case 0X7E:KeyNum=7;break;
+  57   2          case 0X7D:KeyNum=6;break;
+  58   2          case 0X7B:KeyNum=5;break;
+  59   2          case 0X77:KeyNum=4;break;
+  60   2          
+  61   2          case 0XBE:KeyNum=11;break;
+  62   2          case 0XBD:KeyNum=10;break;
+  63   2          case 0XBB:KeyNum=9;break;
+  64   2          case 0XB7:KeyNum=8;break;
+  65   2          
+  66   2          case 0XD7:KeyNum=12;break;
+  67   2        }
+  68   1        AUXR |= 0x10;
+  69   1        P3=0XFF;
+  70   1      }
+  71          
+  72          uc KEY()
+  73          {
+  74   1        uc Temp;
+  75   1        Temp=KeyNum;
+  76   1        KeyNum=0;
+  77   1        return Temp;
+  78   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    171    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

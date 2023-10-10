@@ -1,0 +1,413 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              03/21/2023 22:59:43 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.ls
+                    -t) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "LED.h"
+   2          #include "RB.h"
+   3          #include "Nixie.h"
+   4          #include "Timer.h"
+   5          #include "Delay.h"
+   6          #include "DS18B20.h"
+   7          #include "CLOCK.h"
+   8          #include "KEY.h"
+   9          /*BCD转十进制：BCD/16*10+BCD%16 */
+  10          /*十进制转BCD：DEC/10*16+DEC%10 */
+  11          unsigned char code Nodot_SMG[16]={~0x3F,~0x06,~0x5B,~0x4F,~0x66,~0x6D,~0x7D,~0x07,~0x7F,~0x6F,~0x77,~0x7C,
+             -~0x39,~0x5E,~0x79,~0x71};
+  12          
+  13          unsigned char Time[3]={0X50,0X59,0X23};   //BCD格式
+  14          char setTime[3];
+  15          char setClock[3];
+  16          unsigned char T;
+  17          unsigned char KeyNum;
+  18          unsigned char setClock_State;
+  19          unsigned char setTime_State;
+  20          unsigned char Show_State;
+  21          unsigned char T1_Count1;
+  22          unsigned char T1_Count2;
+  23          unsigned int T1_Count3;
+  24          
+  25          
+  26          bit interval;
+  27          bit LED_State;
+  28          bit T_flag;
+  29          bit C_flag;
+  30          bit Clock_flag;
+  31          
+  32          void Sys_Init(void)
+  33          {
+  34   1        LED_Control(0X00);
+  35   1        RB_Control(0X00);
+  36   1      }
+  37          
+  38          void USE_DS18B20()
+  39          {
+  40   1        if(T_flag==1)
+  41   1        {
+  42   2          T_flag=0;
+  43   2          DS18B20_ConvertT();
+  44   2          T=DS18B20_ReadT();
+  45   2        }
+  46   1      }
+  47          
+  48          void USE_DS1302()
+  49          {
+  50   1        if(C_flag==1)
+  51   1        {
+  52   2          C_flag=0;
+  53   2          Read_Time(Time);
+C51 COMPILER V9.59.0.0   MAIN                                                              03/21/2023 22:59:43 PAGE 2   
+
+  54   2        }
+  55   1        
+  56   1        if(Time[0]==(setClock[0]/10)*16+(setClock[0]%10) && Time[1]==(setClock[1]/10)*16+(setClock[1]%10) && Time
+             -[2]==(setClock[2]/10)*16+(setClock[2]%10))
+  57   1        {
+  58   2          Clock_flag=1;//定时时间到
+  59   2        }
+  60   1      }
+  61          
+  62          void USE_Key(void)
+  63          {
+  64   1        KeyNum=Key();
+  65   1        
+  66   1        if(KeyNum==7)   //S7-时钟按键
+  67   1        {
+  68   2          if(Show_State==0)
+  69   2          {
+  70   3            setTime_State++;
+  71   3            if(setTime_State==4)
+  72   3            {
+  73   4              setTime_State=0;
+  74   4              Time[0]=(setTime[0]/10)*16+(setTime[0]%10);   //十进制转BCD码（Dec/10*16+Dec%10）
+  75   4              Time[1]=(setTime[1]/10)*16+(setTime[1]%10);
+  76   4              Time[2]=(setTime[2]/10)*16+(setTime[2]%10);
+  77   4              Write_Time(Time);
+  78   4            }
+  79   3          }
+  80   2          T1_Count1=0;    //每一次按下都计数清0，为了看到的第一眼显示
+  81   2          Show_State=0;
+  82   2          setClock_State=0;   //在时钟设置状态下闹钟设置页面为时钟显示
+  83   2          
+  84   2          if(Clock_flag==1){Clock_flag=0;LED_State=0;}//闹钟提示状态下任意键关闭闹钟状态
+  85   2        }
+  86   1        if(KeyNum==6)   //S6-闹钟设置按键
+  87   1        {
+  88   2          if(Show_State==1)
+  89   2          {
+  90   3            setClock_State++;
+  91   3            if(setClock_State==4){setClock_State=0;}
+  92   3          }
+  93   2          Show_State=1;
+  94   2          setTime_State=0;  //在闹钟设置状态下时钟设置页面为时钟显示
+  95   2          
+  96   2          if(Clock_flag==1){Clock_flag=0;LED_State=0;}//闹钟提示状态下任意键关闭闹钟状态
+  97   2        }
+  98   1        if(KeyNum==5)   //S5-加功能按键
+  99   1        {
+ 100   2          if(setClock_State==1){setClock[2]+=1;}
+ 101   2          else if(setClock_State==2){setClock[1]+=1;}
+ 102   2          else if(setClock_State==3){setClock[0]+=1;}
+ 103   2          
+ 104   2          if(setTime_State==1){setTime[2]+=1;}
+ 105   2          else if(setTime_State==2){setTime[1]+=1;}
+ 106   2          else if(setTime_State==3){setTime[0]+=1;}
+ 107   2          
+ 108   2          /*阈值范围*/
+ 109   2          if(setClock[2]>23){setClock[2]=0;}
+ 110   2          if(setClock[1]>59){setClock[1]=0;}
+ 111   2          if(setClock[0]>59){setClock[0]=0;}
+ 112   2          
+ 113   2          if(setTime[2]>23){setTime[2]=0;}
+ 114   2          if(setTime[1]>59){setTime[1]=0;}
+C51 COMPILER V9.59.0.0   MAIN                                                              03/21/2023 22:59:43 PAGE 3   
+
+ 115   2          if(setTime[0]>59){setTime[0]=0;}
+ 116   2          
+ 117   2          if(Clock_flag==1){Clock_flag=0;LED_State=0;}//闹钟提示状态下任意键关闭闹钟状态
+ 118   2        }
+ 119   1        if(KeyNum==4)   //S4-减功能和切换显示功能
+ 120   1        {
+ 121   2          if(setClock_State==1){setClock[2]-=1;}
+ 122   2          else if(setClock_State==2){setClock[1]-=1;}
+ 123   2          else if(setClock_State==3){setClock[0]-=1;}
+ 124   2          
+ 125   2          if(setTime_State==1){setTime[2]-=1;}
+ 126   2          else if(setTime_State==2){setTime[1]-=1;}
+ 127   2          else if(setTime_State==3){setTime[0]-=1;}
+ 128   2          
+ 129   2          
+ 130   2          /*阈值范围*/
+ 131   2          if(setClock[2]<0){setClock[2]=23;}
+ 132   2          if(setClock[1]<0){setClock[1]=59;}
+ 133   2          if(setClock[0]<0){setClock[0]=59;}
+ 134   2          
+ 135   2          if(setTime[2]<0){setTime[2]=23;}
+ 136   2          if(setTime[1]<0){setTime[1]=59;}
+ 137   2          if(setTime[0]<0){setTime[0]=59;}
+ 138   2          
+ 139   2          if(Clock_flag==1){Clock_flag=0;LED_State=0;}//闹钟提示状态下任意键关闭闹钟状态
+ 140   2          
+ 141   2          /*由于这里使用的弹起触发，所以按下显示温度数据返回显示时间数据无法表示*/
+ 142   2        }
+ 143   1      }
+ 144          
+ 145          void USE_SMG()
+ 146          {
+ 147   1        if(Show_State==0)
+ 148   1        {
+ 149   2          if(setTime_State==0)        //时钟显示
+ 150   2          {
+ 151   3            Nixie_SetBuf(0,Nodot_SMG[Time[2]/16]);
+ 152   3            Nixie_SetBuf(1,Nodot_SMG[Time[2]%16]);
+ 153   3            Nixie_SetBuf(2,0XBF);
+ 154   3            Nixie_SetBuf(3,Nodot_SMG[Time[1]/16]);
+ 155   3            Nixie_SetBuf(4,Nodot_SMG[Time[1]%16]);
+ 156   3            Nixie_SetBuf(5,0XBF);
+ 157   3            Nixie_SetBuf(6,Nodot_SMG[Time[0]/16]);
+ 158   3            Nixie_SetBuf(7,Nodot_SMG[Time[0]%16]);
+ 159   3          }
+ 160   2          else if(setTime_State==1)   //时钟设置-时设置
+ 161   2          {
+ 162   3            if(interval==0)
+ 163   3            {
+ 164   4              Nixie_SetBuf(0,Nodot_SMG[setTime[2]/10]);
+ 165   4              Nixie_SetBuf(1,Nodot_SMG[setTime[2]%10]);
+ 166   4            }
+ 167   3            else
+ 168   3            {
+ 169   4              Nixie_SetBuf(0,0XFF);
+ 170   4              Nixie_SetBuf(1,0XFF);
+ 171   4            }
+ 172   3            
+ 173   3            Nixie_SetBuf(2,0XFF);
+ 174   3            Nixie_SetBuf(3,0XFF);
+ 175   3            Nixie_SetBuf(4,0XFF);
+ 176   3            Nixie_SetBuf(5,0XFF);
+C51 COMPILER V9.59.0.0   MAIN                                                              03/21/2023 22:59:43 PAGE 4   
+
+ 177   3            Nixie_SetBuf(6,0XFF);
+ 178   3            Nixie_SetBuf(7,0XFF);
+ 179   3          }
+ 180   2          else if(setTime_State==2)       //时钟设置-分设置
+ 181   2          {
+ 182   3            if(interval==0)
+ 183   3            {
+ 184   4              Nixie_SetBuf(3,Nodot_SMG[setTime[1]/10]);
+ 185   4              Nixie_SetBuf(4,Nodot_SMG[setTime[1]%10]);
+ 186   4            }
+ 187   3            else
+ 188   3            {
+ 189   4              Nixie_SetBuf(3,0XFF);
+ 190   4              Nixie_SetBuf(4,0XFF);
+ 191   4            }
+ 192   3            
+ 193   3            Nixie_SetBuf(0,0XFF);
+ 194   3            Nixie_SetBuf(1,0XFF);
+ 195   3            Nixie_SetBuf(2,0XFF);
+ 196   3            Nixie_SetBuf(5,0XFF);
+ 197   3            Nixie_SetBuf(6,0XFF);
+ 198   3            Nixie_SetBuf(7,0XFF);
+ 199   3          }
+ 200   2          else if(setTime_State==3)       //时钟设置-秒设置
+ 201   2          {
+ 202   3            if(interval==0)
+ 203   3            {
+ 204   4              Nixie_SetBuf(6,Nodot_SMG[setTime[0]/10]);
+ 205   4              Nixie_SetBuf(7,Nodot_SMG[setTime[0]%10]);
+ 206   4            }
+ 207   3            else
+ 208   3            {
+ 209   4              Nixie_SetBuf(6,0XFF);
+ 210   4              Nixie_SetBuf(7,0XFF);
+ 211   4            }
+ 212   3            
+ 213   3            Nixie_SetBuf(0,0XFF);
+ 214   3            Nixie_SetBuf(1,0XFF);
+ 215   3            Nixie_SetBuf(2,0XFF);
+ 216   3            Nixie_SetBuf(3,0XFF);
+ 217   3            Nixie_SetBuf(4,0XFF);
+ 218   3            Nixie_SetBuf(5,0XFF);
+ 219   3          }
+ 220   2        }
+ 221   1        else if(Show_State==1)    //闹钟显示
+ 222   1        {
+ 223   2          if(setClock_State==0)
+ 224   2          {
+ 225   3            Nixie_SetBuf(0,Nodot_SMG[Time[2]/16]);
+ 226   3            Nixie_SetBuf(1,Nodot_SMG[Time[2]%16]);
+ 227   3            Nixie_SetBuf(2,0XBF);
+ 228   3            Nixie_SetBuf(3,Nodot_SMG[Time[1]/16]);
+ 229   3            Nixie_SetBuf(4,Nodot_SMG[Time[1]%16]);
+ 230   3            Nixie_SetBuf(5,0XBF);
+ 231   3            Nixie_SetBuf(6,Nodot_SMG[Time[0]/16]);
+ 232   3            Nixie_SetBuf(7,Nodot_SMG[Time[0]%16]);
+ 233   3          }
+ 234   2          else if(setClock_State==1)    //闹钟设置-时设置
+ 235   2          {
+ 236   3            Nixie_SetBuf(0,Nodot_SMG[setClock[2]/10]);
+ 237   3            Nixie_SetBuf(1,Nodot_SMG[setClock[2]%10]);
+ 238   3            
+C51 COMPILER V9.59.0.0   MAIN                                                              03/21/2023 22:59:43 PAGE 5   
+
+ 239   3            Nixie_SetBuf(2,0XFF);
+ 240   3            Nixie_SetBuf(3,0XFF);
+ 241   3            Nixie_SetBuf(4,0XFF);
+ 242   3            Nixie_SetBuf(5,0XFF);
+ 243   3            Nixie_SetBuf(6,0XFF);
+ 244   3            Nixie_SetBuf(7,0XFF);
+ 245   3          }
+ 246   2          else if(setClock_State==2)    //闹钟设置-分设置
+ 247   2          {
+ 248   3      
+ 249   3            Nixie_SetBuf(3,Nodot_SMG[setClock[1]/10]);
+ 250   3            Nixie_SetBuf(4,Nodot_SMG[setClock[1]%10]);
+ 251   3            
+ 252   3            Nixie_SetBuf(0,0XFF);
+ 253   3            Nixie_SetBuf(1,0XFF);
+ 254   3            Nixie_SetBuf(2,0XFF);
+ 255   3            Nixie_SetBuf(5,0XFF);
+ 256   3            Nixie_SetBuf(6,0XFF);
+ 257   3            Nixie_SetBuf(7,0XFF);
+ 258   3          }
+ 259   2          else if(setClock_State==3)    //闹钟设置-秒设置
+ 260   2          {
+ 261   3      
+ 262   3            Nixie_SetBuf(6,Nodot_SMG[setClock[0]/10]);
+ 263   3            Nixie_SetBuf(7,Nodot_SMG[setClock[0]%10]);
+ 264   3            
+ 265   3            Nixie_SetBuf(0,0XFF);
+ 266   3            Nixie_SetBuf(1,0XFF);
+ 267   3            Nixie_SetBuf(2,0XFF);
+ 268   3            Nixie_SetBuf(3,0XFF);
+ 269   3            Nixie_SetBuf(4,0XFF);
+ 270   3            Nixie_SetBuf(5,0XFF);
+ 271   3          }
+ 272   2        }
+ 273   1      //  else if(Show_State==2)
+ 274   1      //  {
+ 275   1      //    Nixie_SetBuf(5,Nodot_SMG[T/10]);
+ 276   1      //    Nixie_SetBuf(6,Nodot_SMG[T%10]);
+ 277   1      //    Nixie_SetBuf(7,Nodot_SMG[12]);
+ 278   1      //    
+ 279   1      //    Nixie_SetBuf(0,0XFF);
+ 280   1      //    Nixie_SetBuf(1,0XFF);
+ 281   1      //    Nixie_SetBuf(2,0XFF);
+ 282   1      //    Nixie_SetBuf(3,0XFF);
+ 283   1      //    Nixie_SetBuf(4,0XFF);
+ 284   1      //  }
+ 285   1      
+ 286   1      }
+ 287          
+ 288          void USE_LED()
+ 289          {
+ 290   1        if(LED_State==1){LED_Control(0X01);}
+ 291   1        else{LED_Control(0X00);}
+ 292   1      }
+ 293          
+ 294          /*1ms的中断定时函数*/
+ 295          void Timer0_Routine(void) interrupt 1
+ 296          {
+ 297   1        static unsigned char T0_Count1;
+ 298   1        static unsigned char T0_Count2;
+ 299   1        static unsigned char T_Count;
+ 300   1        static unsigned char C_Count;
+C51 COMPILER V9.59.0.0   MAIN                                                              03/21/2023 22:59:43 PAGE 6   
+
+ 301   1        T0_Count1++;
+ 302   1        T0_Count2++;
+ 303   1        if(T0_Count1==2)
+ 304   1        {
+ 305   2          Nixie_Loop();
+ 306   2          T0_Count1=0;
+ 307   2        }
+ 308   1        if(T0_Count2==10)
+ 309   1        {
+ 310   2          Key_Loop();
+ 311   2          T0_Count2=0;
+ 312   2        }
+ 313   1        
+ 314   1        T_Count++;
+ 315   1        if(T_Count==100)
+ 316   1        {
+ 317   2          T_Count=0;
+ 318   2          T_flag=1;
+ 319   2        }
+ 320   1        C_Count++;
+ 321   1        if(C_Count==50)
+ 322   1        {
+ 323   2          C_Count=0;
+ 324   2          C_flag=1;
+ 325   2        }
+ 326   1        
+ 327   1      }
+ 328          /*10ms的中断定时函数*/
+ 329          void Timer1_Routine(void) interrupt 3
+ 330          {
+ 331   1        T1_Count1++;
+ 332   1        
+ 333   1        if(T1_Count1==100)
+ 334   1        {
+ 335   2          T1_Count1=0;
+ 336   2          interval=~interval;
+ 337   2        }
+ 338   1        
+ 339   1        if(Clock_flag==1)
+ 340   1        {
+ 341   2          T1_Count2++;
+ 342   2          T1_Count3++;
+ 343   2          if(T1_Count2==20)   //达到0.2s
+ 344   2          {
+ 345   3            T1_Count2=0;
+ 346   3            LED_State=~LED_State;
+ 347   3          }
+ 348   2        }
+ 349   1        if(T1_Count3==500)  //达到5s
+ 350   1        {
+ 351   2          T1_Count3=0;
+ 352   2          Clock_flag=0;
+ 353   2          LED_State=0;
+ 354   2        }
+ 355   1      }
+ 356          
+ 357          void main(void)
+ 358          {
+ 359   1        Sys_Init();
+ 360   1        Timer0Init();
+ 361   1        Timer1Init();
+ 362   1        Write_Time(Time);
+C51 COMPILER V9.59.0.0   MAIN                                                              03/21/2023 22:59:43 PAGE 7   
+
+ 363   1        DS18B20_ConvertT();
+ 364   1        Delay1000ms();
+ 365   1        while(1)
+ 366   1        {
+ 367   2          EA=0;
+ 368   2          USE_LED();
+ 369   2          EA=1;
+ 370   2          USE_DS18B20();
+ 371   2          USE_DS1302();
+ 372   2          USE_Key();
+ 373   2          USE_SMG();
+ 374   2        }
+ 375   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1787    ----
+   CONSTANT SIZE    =     16    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     22    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      5    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

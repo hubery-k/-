@@ -1,0 +1,246 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              03/23/2023 15:19:05 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.ls
+                    -t) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "Nixie.h"
+   2          #include "KEY.h"
+   3          #include "DS18B20.h"
+   4          #include "Timer.h"
+   5          #include "Delay.h"
+   6          #include "PCF8591.h"
+   7          #include "CLOCK.h"
+   8          #include "AT24C02.h"
+   9          
+  10          unsigned char code dot_SMG[]={0x40,0x79,0x24,0x30,0x19,0x12,0x02,0x78,0x00,0x10,0x08,0x03,0x46,0x21,0x06,0
+             -x0e};
+  11          unsigned char code Nodot_SMG[]={~0x3F,~0x06,~0x5B,~0x4F,~0x66,~0x6D,~0x7D,~0x07,~0x7F,~0x6F,~0x77,~0x7C,~0
+             -x39,~0x5E,~0x79,~0x71};
+  12          unsigned char Time[3]={0X50,0X59,0X23};   //23时59分50秒
+  13          
+  14          float adc_v;
+  15          unsigned int smg_v;
+  16          float V_p=3.0;    //电压参数
+  17          float T;
+  18          unsigned char T_Int;
+  19          unsigned char T_Dec;
+  20          unsigned char KeyNum;
+  21          unsigned char Interface;    //显示界面
+  22          unsigned char Num;
+  23          bit T_flag;
+  24          bit AD_flag;
+  25          bit C_flag;
+  26          bit Col_flag;   //AD采集标志
+  27          bit Save_flag;
+  28          
+  29          
+  30          void Sys_Init()
+  31          {
+  32   1        P2=(P2&0X1F)|0X80;P0=0XFF;//关闭LED
+  33   1        P2=(P2&0X1F)|0XA0;P0=0X00;//关闭蜂鸣器、继电器
+  34   1        P2&=0X1F;
+  35   1      }
+  36          
+  37          void USE_PCF8591()
+  38          {
+  39   1        if(AD_flag==1)
+  40   1        {
+  41   2          /*0-AD采集光敏通道 1-AD采集RB2电位器通道*/
+  42   2          AD_flag=0;
+  43   2          adc_v=AD_Read(Col_flag)*(5.0/255);
+  44   2          smg_v=adc_v*100;
+  45   2        }
+  46   1      }
+  47          
+  48          
+  49          void USE_DS18B20()
+  50          {
+  51   1        if(T_flag==1)
+  52   1        {
+C51 COMPILER V9.59.0.0   MAIN                                                              03/23/2023 15:19:05 PAGE 2   
+
+  53   2          T_flag=0;
+  54   2          Convert_T();
+  55   2          T=Read_T();
+  56   2          T_Int=T;
+  57   2          T_Dec=(unsigned char)(T*100)%100;
+  58   2        }
+  59   1      }
+  60          
+  61          void USE_DS1302()
+  62          {
+  63   1        if(C_flag==1)
+  64   1        {
+  65   2          C_flag=0;
+  66   2          Read_Time(Time);
+  67   2        }
+  68   1      }
+  69          
+  70          void USE_AT24C02()
+  71          {
+  72   1        if(Save_flag==1)
+  73   1        {
+  74   2          Save_flag=0;
+  75   2          AT24C02_Write(0X00,Num);
+  76   2          Delay5ms(); //写字节最大需要5ms
+  77   2        }
+  78   1      }
+  79          
+  80          void USE_KEY()
+  81          {
+  82   1        KeyNum=KEY();
+  83   1        if(KeyNum==4)   //S4-界面切换
+  84   1        {
+  85   2          Interface++;
+  86   2          if(Interface==4){Interface=0;}
+  87   2          Num+=1;
+  88   2        }
+  89   1        if(KeyNum==5)   //S5-切换AD收集通道
+  90   1        {
+  91   2          if(Interface==1){Col_flag=~Col_flag;}   //在AD显示界面才可切换AD收集通道
+  92   2        }
+  93   1        if(KeyNum==6)
+  94   1        {
+  95   2          Save_flag=1;
+  96   2        }
+  97   1        if(KeyNum==7)
+  98   1        {
+  99   2          if(Interface==3){Num=0;}
+ 100   2        }
+ 101   1      }
+ 102          
+ 103          void USE_SMG()
+ 104          {
+ 105   1        /*显示温度数据（小数点后两位）*/
+ 106   1        if(Interface==0)
+ 107   1        {
+ 108   2          Nixie_SetBuf(0,Nodot_SMG[12]);    //标识符-C
+ 109   2          Nixie_SetBuf(1,0XFF);
+ 110   2          Nixie_SetBuf(2,0XFF);
+ 111   2          Nixie_SetBuf(3,0XFF);
+ 112   2          Nixie_SetBuf(4,Nodot_SMG[T_Int/10]);
+ 113   2          Nixie_SetBuf(5,dot_SMG[T_Int%10]);
+ 114   2          Nixie_SetBuf(6,Nodot_SMG[T_Dec/10]);
+C51 COMPILER V9.59.0.0   MAIN                                                              03/23/2023 15:19:05 PAGE 3   
+
+ 115   2          Nixie_SetBuf(7,Nodot_SMG[T_Dec%10]);
+ 116   2        }
+ 117   1        /*显示通过AD采集的数据（小数点后两位）*/
+ 118   1        else if(Interface==1)
+ 119   1        {
+ 120   2          Nixie_SetBuf(0,0XC1);   //标识符-U
+ 121   2          Nixie_SetBuf(1,0XFF);
+ 122   2          Nixie_SetBuf(2,0XFF);
+ 123   2          Nixie_SetBuf(3,0XFF);
+ 124   2          Nixie_SetBuf(4,0XFF);
+ 125   2          Nixie_SetBuf(5,dot_SMG[smg_v/100]);
+ 126   2          Nixie_SetBuf(6,Nodot_SMG[smg_v/10%10]);
+ 127   2          Nixie_SetBuf(7,Nodot_SMG[smg_v%10]);
+ 128   2        }
+ 129   1        /*显示DS1302实时时钟时间数据*/
+ 130   1        else if(Interface==2)
+ 131   1        {
+ 132   2          Nixie_SetBuf(0,Nodot_SMG[Time[2]/16]);
+ 133   2          Nixie_SetBuf(1,Nodot_SMG[Time[2]%16]);
+ 134   2          Nixie_SetBuf(2,0XBF);
+ 135   2          Nixie_SetBuf(3,Nodot_SMG[Time[1]/16]);
+ 136   2          Nixie_SetBuf(4,Nodot_SMG[Time[1]%16]);
+ 137   2          Nixie_SetBuf(5,0XBF);
+ 138   2          Nixie_SetBuf(6,Nodot_SMG[Time[0]/16]);
+ 139   2          Nixie_SetBuf(7,Nodot_SMG[Time[0]%16]);
+ 140   2        }
+ 141   1        else if(Interface==3)
+ 142   1        {
+ 143   2          Nixie_SetBuf(0,0XC8);   //标识符-n
+ 144   2          Nixie_SetBuf(1,0XFF);
+ 145   2          Nixie_SetBuf(2,0XFF);
+ 146   2          Nixie_SetBuf(3,0XFF);
+ 147   2          Nixie_SetBuf(4,0XFF);
+ 148   2          Nixie_SetBuf(5,Nodot_SMG[Num/100]);
+ 149   2          Nixie_SetBuf(6,Nodot_SMG[Num/10%10]);
+ 150   2          Nixie_SetBuf(7,Nodot_SMG[Num%10]);
+ 151   2        }
+ 152   1        
+ 153   1      }
+ 154          void Timer0_Routine(void) interrupt 1
+ 155          {
+ 156   1        static unsigned char T0_Count1;
+ 157   1        static unsigned char T0_Count2;
+ 158   1        static unsigned char T_Count;
+ 159   1        static unsigned char AD_Count;
+ 160   1        static unsigned char C_Count;
+ 161   1        
+ 162   1        T0_Count1++;T0_Count2++;
+ 163   1        if(T0_Count1==2)
+ 164   1        {
+ 165   2          T0_Count1=0;
+ 166   2          Nixie_Loop();
+ 167   2        }
+ 168   1        if(T0_Count2==10)
+ 169   1        {
+ 170   2          T0_Count2=0;
+ 171   2          KEY_Loop();
+ 172   2        }
+ 173   1        
+ 174   1        T_Count++;
+ 175   1        if(T_Count==100)
+ 176   1        {
+C51 COMPILER V9.59.0.0   MAIN                                                              03/23/2023 15:19:05 PAGE 4   
+
+ 177   2          T_Count=0;
+ 178   2          T_flag=1;
+ 179   2        }
+ 180   1        
+ 181   1        AD_Count++;
+ 182   1        if(AD_Count==50)
+ 183   1        {
+ 184   2          AD_Count=0;
+ 185   2          AD_flag=1;
+ 186   2        }
+ 187   1        
+ 188   1        C_Count++;
+ 189   1        if(C_Count==50)
+ 190   1        {
+ 191   2          C_Count=0;
+ 192   2          C_flag=1;
+ 193   2        }
+ 194   1      }
+ 195          
+ 196          
+ 197          void main()
+ 198          {
+ 199   1        Sys_Init();
+ 200   1        Timer0Init();
+ 201   1        Set_Time(Time);
+ 202   1        Num=AT24C02_Read(0X00); //首次上电可能会随机读取一个数值（无所谓，只是测试。）
+ 203   1        Convert_T();
+ 204   1        Delay750ms();
+ 205   1        while(1)
+ 206   1        {
+ 207   2          USE_DS18B20();
+ 208   2          USE_PCF8591();
+ 209   2          USE_DS1302();
+ 210   2          USE_AT24C02();
+ 211   2          USE_SMG();
+ 212   2          USE_KEY();
+ 213   2        }
+ 214   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    882    ----
+   CONSTANT SIZE    =     32    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     27    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      5    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

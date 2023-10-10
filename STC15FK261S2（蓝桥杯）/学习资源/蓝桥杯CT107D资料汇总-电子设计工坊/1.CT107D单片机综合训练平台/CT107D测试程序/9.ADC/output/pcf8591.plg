@@ -1,0 +1,23 @@
+<html>
+<body>
+<pre>
+<h1>礦ision Build Log</h1>
+<h2>Project:</h2>
+C:\Users\langtaosha\Desktop\工信部比赛51开发板上的芯片资料\蓝桥杯 单片机设计与开发\CT107D测试程序\9.ADC\pcf8591.uvproj
+Project File Date:  11/16/2013
+
+<h2>Output:</h2>
+compiling main.c...
+main.c - 0 Error(s), 0 Warning(s).
+Build target 'Target 1'
+linking...
+Program Size: data=13.2 xdata=0 code=613
+creating hex file from ".\output\pcf8591"...
+".\output\pcf8591" - 0 Error(s), 0 Warning(s).
+Rebuild target 'Target 1'
+compiling main.c...
+compiling pcf8591.c...
+linking...
+Program Size: data=13.2 xdata=0 code=613
+creating hex file from ".\output\pcf8591"...
+".\output\pcf8591" - 0 Error(s), 0 Warning(s).

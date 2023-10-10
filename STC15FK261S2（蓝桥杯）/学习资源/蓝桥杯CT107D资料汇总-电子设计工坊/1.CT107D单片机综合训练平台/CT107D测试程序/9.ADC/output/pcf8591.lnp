@@ -1,0 +1,4 @@
+".\output\main.obj",
+".\output\pcf8591.obj" 
+TO ".\output\pcf8591" 
+PRINT(".\list\pcf8591.m51") RAMSIZE(256) 

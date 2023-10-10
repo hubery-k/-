@@ -1,0 +1,4 @@
+".\Objects\STARTUP.obj",
+".\Objects\main.obj" 
+TO ".\Objects\NE555的信号发生与频率测量" 
+PRINT(".\Listings\NE555的信号发生与频率测量.m51") RAMSIZE(256) 

@@ -1,0 +1,47 @@
+C51 COMPILER V9.59.0.0   LED                                                               03/05/2023 17:09:49 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE LED
+OBJECT MODULE PLACED IN .\Objects\LED.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE LED.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\LED.lst)
+                    - TABS(2) OBJECT(.\Objects\LED.obj)
+
+line level    source
+
+   1          #include "LED.h"
+   2          
+   3          void LED_Init(void)
+   4          {
+   5   1        P2&=0X1F;//锁存
+   6   1        P0=0XFF;  //全都不点亮
+   7   1        P2=(P2&0X1F)|0X80;
+   8   1      }
+   9          
+  10          void LED_Open(unsigned char Open)
+  11          {
+  12   1        LED_Init();
+  13   1        P0&=~Open;  //低电平点亮
+  14   1        P2=(P2&0X1F)|0X80;//由于调用了的Init函数中有573通往LED。所以这句可写可不写
+  15   1      
+  16   1      }
+  17          
+  18          void LED_Close(unsigned char Close)
+  19          {
+  20   1        LED_Init();
+  21   1        P0|=Close;  //高电平熄灭
+  22   1        P2=(P2&0X1F)|0X80;//可写可不写
+  23   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     46    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

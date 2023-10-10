@@ -1,0 +1,51 @@
+C51 COMPILER V9.59.0.0   AD                                                                12/31/2022 18:47:23 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE AD
+OBJECT MODULE PLACED IN .\Objects\AD.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE BSP\src\AD.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\BSP\inc;.\TOOL\inc) DEBUG OB
+                    -JECTEXTEND PRINT(.\Listings\AD.lst) TABS(2) OBJECT(.\Objects\AD.obj)
+
+line level    source
+
+   1          #include "AD.h"
+   2          #include "iiC.h"
+   3          unsigned char Data;
+   4          #define PCF8591_ADDRESS  0X90
+   5          #define COMMAND_AIN1 0X01         //¹âÃôµç×è
+   6          #define COMMAND_AIN3 0X03         //¿Éµ÷µç×è
+   7          
+   8          unsigned char AD_Read(void)
+   9          {
+  10   1        IIC_Start(); 
+  11   1        IIC_SendByte(PCF8591_ADDRESS);//·¢ËÍ´Ó»úÉè±¸µØÖ·
+  12   1        IIC_WaitAck();//´Ó»ú½ÓÊÕºóµÈ´ý´Ó»úÓ¦´ð
+  13   1        IIC_SendByte(COMMAND_AIN3);//Ð´Èë¿ØÖÆ×Ö£¨¸Ã×Ö½ÚÐ´Èë¿ØÖÆ¼Ä´æÆ÷£©
+  14   1        IIC_WaitAck();//´Ó»ú½ÓÊÕºóµÈ´ý´Ó»úÓ¦´ð
+  15   1        IIC_Stop();
+  16   1        
+  17   1        
+  18   1        IIC_Start(); 
+  19   1        IIC_SendByte(PCF8591_ADDRESS|0X01);//·¢ËÍ´Ó»úÉè±¸µØÖ·
+  20   1        IIC_WaitAck();//´Ó»ú½ÓÊÕºóµÈ´ý´Ó»úÓ¦´ð
+  21   1        Data=IIC_RecByte();
+  22   1        IIC_SendAck(1);//·¢ËÍ·ÇÓ¦´ð
+  23   1        IIC_Stop();
+  24   1        return Data;  
+  25   1      }
+  26          /*µ±Ö÷¿ØÖÆÆ÷½ÓÊÜÍêÊý¾Ýºó£¬Ó¦Ïò±»¿ØÖÆÆ÷·¢ËÍ·ÇÓ¦´ð(1)£¬Ê¹±»¿ØÖÆÆ÷ÊÍ·ÅÊý¾ÝÏß£¬ÒÔ±ãÖ÷¿ØÖÆÆ÷·¢ËÍÍ£Ö¹ÐÅºÅ¶øÖÕÖ¹Ê
+             -ý¾Ý´«Êä*/
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     49    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      1    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

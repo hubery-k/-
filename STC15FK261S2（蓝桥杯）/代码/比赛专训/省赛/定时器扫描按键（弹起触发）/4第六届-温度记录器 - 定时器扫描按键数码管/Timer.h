@@ -1,0 +1,6 @@
+#ifndef _TIMER_H
+#define __TIMER_H
+#include <STC15F2K60S2.H>
+void Timer0Init(void);		//10∫¡√Î@11.0592MHz
+
+#endif

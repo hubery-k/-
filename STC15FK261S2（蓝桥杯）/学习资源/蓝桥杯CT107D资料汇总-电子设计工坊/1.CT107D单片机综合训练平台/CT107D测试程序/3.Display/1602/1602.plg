@@ -1,0 +1,223 @@
+<html>
+<body>
+<pre>
+<h1>µVision Build Log</h1>
+<h2>Project:</h2>
+C:\Documents and Settings\Administrator\◊¿√Ê\CT107D≤‚ ‘≥Ã–Ú\3.Display\1602\1602.uvproj
+Project File Date:  06/20/2011
+
+<h2>Output:</h2>
+Build target 'Target 1'
+assembling STARTUP.A51...
+compiling main.c...
+MAIN.C(19): error C141: syntax error near 'unsigned'
+MAIN.C(21): error C141: syntax error near 'void'
+MAIN.C(40): error C231: '_delay_ms': redefinition
+MAIN.C(45): error C141: syntax error near '}'
+MAIN.C(46): error C231: '_delay_ms': redefinition
+MAIN.C(55): error C202: 'E': undefined identifier
+MAIN.C(56): error C202: 'DATA': undefined identifier
+MAIN.C(57): error C202: 'E': undefined identifier
+MAIN.C(68): error C202: 'DATA': undefined identifier
+MAIN.C(74): error C141: syntax error near '{'
+MAIN.C(76): error C141: syntax error near 'if'
+MAIN.C(76): error C141: syntax error near '>=', expected ')'
+MAIN.C(77): error C231: 'p': redefinition
+MAIN.C(77): error C202: 'pos': undefined identifier
+MAIN.C(78): error C141: syntax error near 'else'
+MAIN.C(79): error C279: 'p': multiple initialization
+MAIN.C(79): error C202: 'pos': undefined identifier
+MAIN.C(80): error C231: '_write_command': redefinition
+MAIN.C(81): error C231: '_write_data': redefinition
+MAIN.C(82): error C141: syntax error near '}'
+Target not created
+Build target 'Target 1'
+assembling STARTUP.A51...
+compiling main.c...
+MAIN.C(19): error C141: syntax error near 'unsigned'
+MAIN.C(21): error C141: syntax error near 'void'
+MAIN.C(40): error C231: '_delay_ms': redefinition
+MAIN.C(45): error C141: syntax error near '}'
+MAIN.C(46): error C231: '_delay_ms': redefinition
+MAIN.C(55): error C202: 'E': undefined identifier
+MAIN.C(56): error C202: 'DATA': undefined identifier
+MAIN.C(57): error C202: 'E': undefined identifier
+MAIN.C(68): error C202: 'DATA': undefined identifier
+MAIN.C(74): error C141: syntax error near '{'
+MAIN.C(76): error C141: syntax error near 'if'
+MAIN.C(76): error C141: syntax error near '>=', expected ')'
+MAIN.C(77): error C231: 'p': redefinition
+MAIN.C(77): error C202: 'pos': undefined identifier
+MAIN.C(78): error C141: syntax error near 'else'
+MAIN.C(79): error C279: 'p': multiple initialization
+MAIN.C(79): error C202: 'pos': undefined identifier
+MAIN.C(80): error C231: '_write_command': redefinition
+MAIN.C(81): error C231: '_write_data': redefinition
+MAIN.C(82): error C141: syntax error near '}'
+Target not created
+Build target 'Target 1'
+assembling STARTUP.A51...
+compiling main.c...
+MAIN.C(45): error C141: syntax error near '}'
+MAIN.C(55): error C202: 'E': undefined identifier
+MAIN.C(56): error C202: 'DATA': undefined identifier
+MAIN.C(57): error C202: 'E': undefined identifier
+MAIN.C(68): error C202: 'DATA': undefined identifier
+MAIN.C(74): error C141: syntax error near '{'
+MAIN.C(76): error C141: syntax error near 'if'
+MAIN.C(76): error C141: syntax error near '>=', expected ')'
+MAIN.C(77): error C231: 'p': redefinition
+MAIN.C(77): error C202: 'pos': undefined identifier
+MAIN.C(78): error C141: syntax error near 'else'
+MAIN.C(79): error C279: 'p': multiple initialization
+MAIN.C(79): error C202: 'pos': undefined identifier
+MAIN.C(80): error C231: '_write_command': redefinition
+MAIN.C(81): error C231: '_write_data': redefinition
+MAIN.C(82): error C141: syntax error near '}'
+Target not created
+Build target 'Target 1'
+assembling STARTUP.A51...
+compiling main.c...
+MAIN.C(55): error C202: 'E': undefined identifier
+MAIN.C(56): error C202: 'DATA': undefined identifier
+MAIN.C(57): error C202: 'E': undefined identifier
+MAIN.C(68): error C202: 'DATA': undefined identifier
+MAIN.C(74): error C141: syntax error near '{'
+MAIN.C(76): error C141: syntax error near 'if'
+MAIN.C(76): error C141: syntax error near '>=', expected ')'
+MAIN.C(77): error C231: 'p': redefinition
+MAIN.C(77): error C202: 'pos': undefined identifier
+MAIN.C(78): error C141: syntax error near 'else'
+MAIN.C(79): error C279: 'p': multiple initialization
+MAIN.C(79): error C202: 'pos': undefined identifier
+MAIN.C(80): error C231: '_write_command': redefinition
+MAIN.C(81): error C231: '_write_data': redefinition
+MAIN.C(82): error C141: syntax error near '}'
+Target not created
+Build target 'Target 1'
+assembling STARTUP.A51...
+compiling main.c...
+MAIN.C(56): error C202: 'DATA': undefined identifier
+MAIN.C(68): error C202: 'DATA': undefined identifier
+MAIN.C(74): error C141: syntax error near '{'
+MAIN.C(76): error C141: syntax error near 'if'
+MAIN.C(76): error C141: syntax error near '>=', expected ')'
+MAIN.C(77): error C231: 'p': redefinition
+MAIN.C(77): error C202: 'pos': undefined identifier
+MAIN.C(78): error C141: syntax error near 'else'
+MAIN.C(79): error C279: 'p': multiple initialization
+MAIN.C(79): error C202: 'pos': undefined identifier
+MAIN.C(80): error C231: '_write_command': redefinition
+MAIN.C(81): error C231: '_write_data': redefinition
+MAIN.C(82): error C141: syntax error near '}'
+Target not created
+Build target 'Target 1'
+assembling STARTUP.A51...
+compiling main.c...
+MAIN.C(56): error C202: 'DATA': undefined identifier
+MAIN.C(68): error C202: 'DATA': undefined identifier
+MAIN.C(74): error C141: syntax error near '{'
+MAIN.C(76): error C141: syntax error near 'if'
+MAIN.C(76): error C141: syntax error near '>=', expected ')'
+MAIN.C(77): error C231: 'p': redefinition
+MAIN.C(77): error C202: 'pos': undefined identifier
+MAIN.C(78): error C141: syntax error near 'else'
+MAIN.C(79): error C279: 'p': multiple initialization
+MAIN.C(79): error C202: 'pos': undefined identifier
+MAIN.C(80): error C231: '_write_command': redefinition
+MAIN.C(81): error C231: '_write_data': redefinition
+MAIN.C(82): error C141: syntax error near '}'
+Target not created
+Build target 'Target 1'
+assembling STARTUP.A51...
+compiling main.c...
+MAIN.C(56): error C202: 'DATA': undefined identifier
+MAIN.C(68): error C202: 'DATA': undefined identifier
+Target not created
+Build target 'Target 1'
+assembling STARTUP.A51...
+compiling main.c...
+MAIN.C(56): error C202: 'DATA': undefined identifier
+MAIN.C(68): error C202: 'DATA': undefined identifier
+Target not created
+Build target 'Target 1'
+assembling STARTUP.A51...
+compiling main.c...
+MAIN.C(56): error C202: 'DATA': undefined identifier
+MAIN.C(68): error C202: 'DATA': undefined identifier
+Target not created
+Build target 'Target 1'
+assembling STARTUP.A51...
+compiling main.c...
+MAIN.C(93): warning C206: 'WriteCommand': missing function-prototype
+MAIN.C(93): error C267: 'WriteCommand': requires ANSI-style prototype
+Target not created
+Build target 'Target 1'
+assembling STARTUP.A51...
+compiling main.c...
+MAIN.C(93): warning C206: 'WriteCommand': missing function-prototype
+MAIN.C(93): error C267: 'WriteCommand': requires ANSI-style prototype
+Target not created
+Build target 'Target 1'
+assembling STARTUP.A51...
+compiling main.c...
+linking...
+Program Size: data=41.0 xdata=0 code=426
+creating hex file from ".\output\1602"...
+".\output\1602" - 0 Error(s), 0 Warning(s).
+Build target 'Target 1'
+assembling STARTUP.A51...
+compiling main.c...
+linking...
+Program Size: data=41.0 xdata=0 code=426
+creating hex file from ".\output\1602"...
+".\output\1602" - 0 Error(s), 0 Warning(s).
+Build target 'Target 1'
+assembling STARTUP.A51...
+compiling main.c...
+linking...
+Program Size: data=41.0 xdata=0 code=426
+creating hex file from ".\output\1602"...
+".\output\1602" - 0 Error(s), 0 Warning(s).
+Build target 'Target 1'
+assembling STARTUP.A51...
+compiling main.c...
+linking...
+Program Size: data=43.0 xdata=0 code=434
+creating hex file from ".\output\1602"...
+".\output\1602" - 0 Error(s), 0 Warning(s).
+Build target 'Target 1'
+assembling STARTUP.A51...
+compiling main.c...
+linking...
+Program Size: data=43.0 xdata=0 code=434
+creating hex file from ".\output\1602"...
+".\output\1602" - 0 Error(s), 0 Warning(s).
+Build target 'Target 1'
+assembling STARTUP.A51...
+compiling main.c...
+linking...
+Program Size: data=43.0 xdata=0 code=434
+creating hex file from ".\output\1602"...
+".\output\1602" - 0 Error(s), 0 Warning(s).
+Build target 'Target 1'
+assembling STARTUP.A51...
+compiling main.c...
+linking...
+Program Size: data=43.0 xdata=0 code=434
+creating hex file from ".\output\1602"...
+".\output\1602" - 0 Error(s), 0 Warning(s).
+Build target 'Target 1'
+assembling STARTUP.A51...
+compiling main.c...
+linking...
+Program Size: data=43.0 xdata=0 code=434
+creating hex file from ".\output\1602"...
+".\output\1602" - 0 Error(s), 0 Warning(s).
+Build target 'Target 1'
+assembling STARTUP.A51...
+compiling main.c...
+linking...
+Program Size: data=43.0 xdata=0 code=434
+creating hex file from ".\output\1602"...
+".\output\1602" - 0 Error(s), 0 Warning(s).

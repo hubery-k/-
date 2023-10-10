@@ -1,0 +1,63 @@
+C51 COMPILER V9.59.0.0   KEY                                                               03/20/2023 21:27:08 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\KEY.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE KEY.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\KEY.lst)
+                    - TABS(2) OBJECT(.\Objects\KEY.obj)
+
+line level    source
+
+   1          #include "KEY.h"
+   2          
+   3          static unsigned char KeyNum;
+   4          
+   5          
+   6          unsigned char Key_GetState()
+   7          {
+   8   1        unsigned char Num=0;    //NumÊÇ¾Ö²¿±äÁ¿Ã¿Ò»´Îµ÷ÓÃ¶¼»á¸³³õÖµÎª12(ÓÉÓÚ12Ã»ÓÐ±»Ê¹ÓÃ)
+   9   1        
+  10   1      
+  11   1        if(KEY7==0){Num=7;}
+  12   1        if(KEY6==0){Num=6;}
+  13   1        if(KEY5==0){Num=5;}
+  14   1        if(KEY4==0){Num=4;}
+  15   1      
+  16   1        return Num;
+  17   1      }
+  18          
+  19          void Key_Loop(void)
+  20          {
+  21   1        static unsigned char N_State,L_State;
+  22   1        L_State=N_State;
+  23   1        N_State=Key_GetState();
+  24   1        if(L_State==7&& N_State==0){KeyNum=7;}
+  25   1        if(L_State==6&& N_State==0){KeyNum=6;}
+  26   1        if(L_State==5&& N_State==0){KeyNum=5;}
+  27   1        if(L_State==4&& N_State==0){KeyNum=4;}
+  28   1      }
+  29          
+  30          unsigned char KEY(void)
+  31          {
+  32   1        unsigned char Temp=0;
+  33   1        Temp=KeyNum;
+  34   1        KeyNum=0;   //Ã¿Ò»´Îµ÷ÓÃ½áÊøºóÇå³ý°´¼ü×´Ì¬
+  35   1        return Temp;
+  36   1      }
+  37          /*¼Ç×¡ÔÚKeyº¯ÊýÖÐ²»ÄÜÀûÓÃreturnÀ´·µ»Ø¼üÖµ¡£ÀýÈç£¬µ±µÚÒ»´Î°´ÏÂKeyNum=1£¬ÄÇÃ´ÏÂ´Îµ÷ÓÃ¸Ãº¯ÊýÊ±¼´Ê¹Ã»ÓÐ°´¼ü°´Ï
+             -ÂÒÀÈ»»á·µ»Ø¼üÖµKeyNum=1
+  38            ÕâÀïÎÒÊ¹ÓÃÈ«¾Ö±äÁ¿·µ»Ø¼üÖµ*/
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     93    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,51 @@
+C51 COMPILER V9.59.0.0   DS18B20                                                           03/21/2023 22:59:44 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE DS18B20
+OBJECT MODULE PLACED IN .\Objects\DS18B20.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE DS18B20.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\DS18
+                    -B20.lst) TABS(2) OBJECT(.\Objects\DS18B20.obj)
+
+line level    source
+
+   1          #include "DS18B20.h"
+   2          #include "onewire.h"
+   3          void Write_DS18B20(unsigned char dat);
+   4          unsigned char Read_DS18B20(void);
+   5          bit init_ds18b20(void);
+   6          void DS18B20_ConvertT()
+   7          {
+   8   1        init_ds18b20();
+   9   1        Write_DS18B20(0XCC);    //跳过Rom指令（只有一个从机设备不需要再寻找指定从机）
+  10   1        Write_DS18B20(0X44);    //开始转换温度
+  11   1      }
+  12          
+  13          float DS18B20_ReadT()
+  14          {
+  15   1        unsigned char TMSB,TLSB;
+  16   1        unsigned int Temp;
+  17   1        float T;
+  18   1        init_ds18b20();
+  19   1        Write_DS18B20(0XCC);    //跳过Rom指令（只有一个从机设备不需要再寻找指定从机）
+  20   1        Write_DS18B20(0XBE);    //开始读取温度
+  21   1        TLSB=Read_DS18B20();
+  22   1        TMSB=Read_DS18B20();
+  23   1        Temp=(TMSB<<8)|TLSB;
+  24   1        T=Temp*0.0625;
+  25   1        
+  26   1        return T;
+  27   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     56    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,40 @@
+C51 COMPILER V9.59.0.0   RELAY                                                             12/17/2022 02:19:46 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE RELAY
+OBJECT MODULE PLACED IN .\Objects\RELAY.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE BSP\src\RELAY.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\BSP\inc;.\TOOL\inc) DEBUG
+                    - OBJECTEXTEND PRINT(.\Listings\RELAY.lst) TABS(2) OBJECT(.\Objects\RELAY.obj)
+
+line level    source
+
+   1          #include "RELAY.h"
+   2          #include "Delay.h"
+   3          
+   4          void RELAY_Init()
+   5          {
+   6   1        P2=(P2&0x1f)|0xA0;
+   7   1        P0&=~0X10;
+   8   1      }
+   9          
+  10          void RELAY_ON(void)
+  11          {
+  12   1        RELAY_Init();
+  13   1        P0|=0x10;//输入高电平通过达林顿管输出低电平继电器吸合
+  14   1        Delay500ms();
+  15   1        P0&=~0X10;//关闭
+  16   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     25    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

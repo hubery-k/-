@@ -1,0 +1,16 @@
+".\Objects\STARTUP.obj",
+".\Objects\main.obj",
+".\Objects\HC573.obj",
+".\Objects\KEY.obj",
+".\Objects\AT24C02.obj",
+".\Objects\DS18B20.obj",
+".\Objects\PCF8591.obj",
+".\Objects\Sonic.obj",
+".\Objects\Delay.obj",
+".\Objects\Timer.obj",
+".\Objects\Uart.obj",
+".\Objects\iic.obj",
+".\Objects\onewire.obj" 
+TO ".\Objects\Project" 
+PRINT(".\Listings\Project.m51") RAMSIZE(256) 
+DISABLEWARNING (16) 

@@ -1,0 +1,270 @@
+??AT
+
+OK
+AT+RST
+
+OK
+
+ ets Jan  8 2013,rst cause:2, boot mode:(3,6)
+
+load 0x40100000, len 1396, room 16 
+tail 4
+chksum 0x89
+load 0x3ffe8000, len 776, room 4 
+tail 4
+chksum 0xe8
+load 0x3ffe8308, len 540, room 4 
+tail 8
+chksum 0xc0
+csum 0xc0
+
+2nd boot version : 1.4(b1)
+  SPI Speed      : 40MHz
+  SPI Mode       : DIO
+  SPI Flash Size & Map: 8Mbit(512KB+512KB)
+jump to run user1 @ 1000
+
+?n't use rtc mem data
+{$è√sl??
+Ai-Thinker Technology Co.,Ltd.
+
+invalid
+WIFI DISCONNECT
+AT+CIOBAUD=115200
+
+OK
+AT+CWMODE=3
+
+OK
+AT+CWSAP=°∞Mi 11°±,°∞kx123456°±
+
+ERROR
+AT+CWSAP=°∞Mi°±,°∞kx123456°±
+
+ERROR
+AT+CWSAP=°∞Mi°±,°∞kx123456°±
+
+ERROR
+AT
+
+OK
+AT+RST
+
+OK
+
+ ets Jan  8 2013,rst cause:2, boot mode:(3,6)
+
+load 0x40100000, len 1396, room 16 
+tail 4
+chksum 0x89
+load 0x3ffe8000, len 776, room 4 
+tail 4
+chksum 0xe8
+load 0x3ffe8308, len 540, room 4 
+tail 8
+chksum 0xc0
+csum 0xc0
+
+2nd boot version : 1.4(b1)
+  SPI Speed      : 40MHz
+  SPI Mode       : DIO
+  SPI Flash Size & Map: 8Mbit(512KB+512KB)
+jump to run user1 @ 1000
+
+?n't use rtc mem data
+sdéÉr$??
+Ai-Thinker Technology Co.,Ltd.
+
+invalid
+AT+CWMODE=3
+
+OK
+AT+CWSAP=°∞Mi°±,°∞kx123456°±
+
+ERROR
+WIFI DISCONNECT
+AT+CWJAP=°∞Mi°±,°∞kx123456°±
+
+ERROR
+AT
+
+OK
+AT+RST
+
+OK
+
+ ets Jan  8 2013,rst cause:2, boot mode:(3,6)
+
+load 0x40100000, len 1396, room 16 
+tail 4
+chksum 0x89
+load 0x3ffe8000, len 776, room 4 
+tail 4
+chksum 0xe8
+load 0x3ffe8308, len 540, room 4 
+tail 8
+chksum 0xc0
+csum 0xc0
+
+2nd boot version : 1.4(b1)
+  SPI Speed      : 40MHz
+  SPI Mode       : DIO
+  SPI Flash Size & Map: 8Mbit(512KB+512KB)
+jump to run user1 @ 1000
+
+?n't use rtc mem data
+{láÉ{ld?
+Ai-Thinker Technology Co.,Ltd.
+
+invalid
+AT+CWMODE=3
+
+OK
+AT+CWJAP=°∞Mi°±,°∞kx123456°±
+
+ERROR
+WIFI DISCONNECT
+AT+CWJAP="Mi","kx123456"
+WIFI CONNECTED
+WIFI GOT IP
+
+OK
+AT
+
+OK
+AT+RST
+
+OK
+WIFI DISCONNECT
+
+ ets Jan  8 2013,rst cause:2, boot mode:(3,6)
+
+load 0x40100000, len 1396, room 16 
+tail 4
+chksum 0x89
+load 0x3ffe8000, len 776, room 4 
+tail 4
+chksum 0xe8
+load 0x3ffe8308, len 540, room 4 
+tail 8
+chksum 0xc0
+csum 0xc0
+
+2nd boot version : 1.4(b1)
+  SPI Speed      : 40MHz
+  SPI Mode       : DIO
+  SPI Flash Size & Map: 8Mbit(512KB+512KB)
+jump to run user1 @ 1000
+
+?n't use rtc mem data
+sd«É;$d?
+Ai-Thinker Technology Co.,Ltd.
+
+invalid
+AT+CWMODE=3
+
+OK
+AT+CWSAP="Mi","kx123456"
+
+ERROR
+WIFI CONNECTED
+WIFI GOT IP
+AT+CWJAP="Mi","kx123456"
+WIFI DISCONNECT
+AT+CWJAP="Mi","kx123456"
+busy p...
+AT
+busy p...
+WIFI CONNECTED
+WIFI GOT IP
+
+OK
+AT+RST
+
+OK
+WIFI DISCONNECT
+
+ ets Jan  8 2013,rst cause:2, boot mode:(3,6)
+
+load 0x40100000, len 1396, room 16 
+tail 4
+chksum 0x89
+load 0x3ffe8000, len 776, room 4 
+tail 4
+chksum 0xe8
+load 0x3ffe8308, len 540, room 4 
+tail 8
+chksum 0xc0
+csum 0xc0
+
+2nd boot version : 1.4(b1)
+  SPI Speed      : 40MHz
+  SPI Mode       : DIO
+  SPI Flash Size & Map: 8Mbit(512KB+512KB)
+jump to run user1 @ 1000
+
+?n't use rtc mem data
+{$èÇsl??
+Ai-Thinker Technology Co.,Ltd.
+
+invalid
+AT+CWMODE=3
+
+OK
+WIFI CONNECTED
+WIFI GOT IP
+AT+CWJAP="Mi","kx123456"
+WIFI DISCONNECT
+WIFI CONNECTED
+WIFI GOT IP
+
+OK
+AT+ CIPSTART="TCP","183.230.40.39",876
+
+ERROR
+AT
+
+OK
+AT+RST
+
+OK
+WIFI DISCONNECT
+
+ ets Jan  8 2013,rst cause:2, boot mode:(3,6)
+
+load 0x40100000, len 1396, room 16 
+tail 4
+chksum 0x89
+load 0x3ffe8000, len 776, room 4 
+tail 4
+chksum 0xe8
+load 0x3ffe8308, len 540, room 4 
+tail 8
+chksum 0xc0
+csum 0xc0
+
+2nd boot version : 1.4(b1)
+  SPI Speed      : 40MHz
+  SPI Mode       : DIO
+  SPI Flash Size & Map: 8Mbit(512KB+512KB)
+jump to run user1 @ 1000
+
+?n't use rtc mem data
+{$èÇsl??
+Ai-Thinker Technology Co.,Ltd.
+
+invalid
+AT+CWMODE=3
+
+OK
+AT+CWJAP="Mi","kx123456"
+AT+ CIPSTART="TCP","183.230.40.39",876
+busy p...
+WIFI DISCONNECT
+WIFI CONNECTED
+WIFI GOT IP
+
+OK
+AT+ CIPSTART="TCP","183.230.40.39",876
+
+ERROR

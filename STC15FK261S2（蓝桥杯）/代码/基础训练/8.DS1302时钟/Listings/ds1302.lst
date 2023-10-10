@@ -1,0 +1,77 @@
+C51 COMPILER V9.59.0.0   DS1302                                                            12/26/2022 00:02:20 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE DS1302
+OBJECT MODULE PLACED IN .\Objects\ds1302.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE TOOL\src\ds1302.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\BSP\inc;.\TOOL\inc) DEB
+                    -UG OBJECTEXTEND PRINT(.\Listings\ds1302.lst) TABS(2) OBJECT(.\Objects\ds1302.obj)
+
+line level    source
+
+   1          #include "ds1302.h"                   
+   2          
+   3            
+   4          //写字节
+   5          void Write_Ds1302(unsigned  char temp) 
+   6          {
+   7   1        unsigned char i;
+   8   1        for (i=0;i<8;i++)       
+   9   1        { 
+  10   2          SCK = 0;
+  11   2          SDA = temp&0x01;
+  12   2          temp>>=1; 
+  13   2          SCK=1;
+  14   2        }
+  15   1      }   
+  16          
+  17          //向DS1302寄存器写入数据
+  18          void Write_Ds1302_Byte( unsigned char address,unsigned char dat )     
+  19          {
+  20   1        RST=0;  _nop_();
+  21   1        SCK=0;  _nop_();
+  22   1        RST=1;  _nop_();  
+  23   1        Write_Ds1302(address);  
+  24   1        Write_Ds1302(dat);    
+  25   1        RST=0; 
+  26   1      }
+  27          
+  28          //从DS1302寄存器读出数据
+  29          unsigned char Read_Ds1302_Byte ( unsigned char address )
+  30          {
+  31   1        unsigned char i,temp=0x00;
+  32   1        RST=0;  _nop_();
+  33   1        SCK=0;  _nop_();
+  34   1        RST=1;  _nop_();
+  35   1        Write_Ds1302(address);
+  36   1        for (i=0;i<8;i++)   
+  37   1        {   
+  38   2          SCK=0;
+  39   2          temp>>=1; 
+  40   2          if(SDA)
+  41   2          temp|=0x80; 
+  42   2          SCK=1;
+  43   2        } 
+  44   1        RST=0;  _nop_();
+  45   1        SCK=0;  _nop_();
+  46   1        SCK=1;  _nop_();
+  47   1        SDA=0;  _nop_();
+  48   1        SDA=1;  _nop_();
+  49   1        return (temp);      
+  50   1      }
+  51          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+C51 COMPILER V9.59.0.0   DS1302                                                            12/26/2022 00:02:20 PAGE 2   
+
+   CODE SIZE        =    109    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

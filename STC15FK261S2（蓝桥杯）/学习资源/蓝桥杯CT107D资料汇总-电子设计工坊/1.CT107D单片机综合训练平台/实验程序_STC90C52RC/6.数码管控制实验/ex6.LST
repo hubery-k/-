@@ -1,0 +1,50 @@
+C51 COMPILER V9.50a   EX6                                                                  10/23/2012 14:54:02 PAGE 1   
+
+
+C51 COMPILER V9.50a, COMPILATION OF MODULE EX6
+OBJECT MODULE PLACED IN ex6.OBJ
+COMPILER INVOKED BY: E:\Keil\C51\BIN\C51.EXE ex6.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          /*******************************************************************************  
+   2          * 文件名称：数码管控制实验
+   3          * 实验目的：1.掌握数码管驱动电路的设计方法
+   4          *           2.掌握数码管显示的基本原理
+   5          * 程序说明：J13配置为MM模式时，通过存储器映射方式编程。
+   6          * 日期版本：2012-9-4/V1.0a 
+   7          *******************************************************************************/
+   8          
+   9          #include "reg52.h"  //定义51单片机特殊功能寄存器
+  10          #include "absacc.h"
+  11                                 
+  12          code unsigned char tab[] = {0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90};
+  13          
+  14          //主函数
+  15          void main(void)
+  16          { 
+  17   1              unsigned char i;
+  18   1      
+  19   1              XBYTE[0xC000] = 0xff;
+  20   1              XBYTE[0xE000] = tab[1];  //显示数值1
+  21   1              
+  22   1          while(1)
+  23   1              {
+  24   2                      ;
+  25   2          }
+  26   1      }
+*** WARNING C280 IN LINE 17 OF ex6.c: 'i': unreferenced local variable
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     17    ----
+   CONSTANT SIZE    =     10    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

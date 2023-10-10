@@ -1,0 +1,3 @@
+".\output\main.obj" 
+TO ".\output\Common" 
+PRINT(".\list\Common.m51") RAMSIZE(256) 

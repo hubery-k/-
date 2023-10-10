@@ -1,0 +1,110 @@
+C51 COMPILER V9.52.0.0   DS18B20                                                           11/17/2013 09:30:51 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE DS18B20
+OBJECT MODULE PLACED IN .\output\ds18b20.obj
+COMPILER INVOKED BY: D:\Program Files\Keil\C51\BIN\C51.EXE ds18b20.c BROWSE DEBUG OBJECTEXTEND PRINT(.\list\ds18b20.lst)
+                    - TABS(2) OBJECT(.\output\ds18b20.obj)
+
+line level    source
+
+   1          #include "ds18b20.h"
+   2          
+   3          //延时函数
+   4          void delay(unsigned int t)
+   5          {
+   6   1        while(t--);
+   7   1      }
+   8          
+   9          //DS18B20初始化函数
+  10          bit init_ds18b20(void)
+  11          {
+  12   1        bit initflag = 0;
+  13   1        DQ = 1;
+  14   1        delay(12);
+  15   1        DQ = 0;
+  16   1        delay(80); // 延时大于480us
+  17   1        DQ = 1;
+  18   1        delay(10);  // 14
+  19   1        initflag = DQ;     // initflag等于1初始化失败
+  20   1        delay(5);
+  21   1        
+  22   1        return initflag;
+  23   1      }
+  24          
+  25          //通过单总线向从器件写一个字节
+  26          void wr_ds18b20(unsigned char byt)
+  27          {
+  28   1        unsigned char i;
+  29   1        for(i=0;i<8;i++)
+  30   1        {
+  31   2          DQ = 0;
+  32   2          DQ = byt&0x01;
+  33   2          delay(5);
+  34   2          DQ = 1;
+  35   2          byt >>= 1;
+  36   2        }
+  37   1        delay(5);
+  38   1      }
+  39          
+  40          //通过单总线从从器件读一个字节
+  41          unsigned char rd_ds18b20(void)
+  42          {
+  43   1        unsigned char i;
+  44   1        unsigned char byt;
+  45   1        
+  46   1        for(i=0;i<8;i++)
+  47   1        {
+  48   2          DQ = 0;
+  49   2          byt >>= 1;
+  50   2          DQ = 1;
+  51   2          if(DQ)
+  52   2          {
+  53   3            byt |= 0x80;
+  54   3          }    
+C51 COMPILER V9.52.0.0   DS18B20                                                           11/17/2013 09:30:51 PAGE 2   
+
+  55   2          delay(5);
+  56   2        }
+  57   1        return byt;
+  58   1      }
+  59          
+  60          //温度转换、读取及数据处理器函数
+  61          unsigned char rd_temperature(void)
+  62          {
+  63   1        unsigned char low,high;
+  64   1        char temp;
+  65   1        
+  66   1        init_ds18b20();
+  67   1        wr_ds18b20(0xCC);
+  68   1        wr_ds18b20(0x44); //启动温度转换
+  69   1        delay(200);
+  70   1      
+  71   1        init_ds18b20();
+  72   1        wr_ds18b20(0xCC);
+  73   1        wr_ds18b20(0xBE); //读取寄存器
+  74   1        
+  75   1        low = rd_ds18b20(); //低字节
+  76   1        high = rd_ds18b20(); //高字节
+  77   1        
+  78   1        temp = high<<4;
+  79   1        temp |= (low>>4);
+  80   1        
+  81   1        return temp;
+  82   1      }
+  83          
+  84          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    163    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----       1
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

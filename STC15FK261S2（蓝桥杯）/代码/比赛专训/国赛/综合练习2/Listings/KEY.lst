@@ -1,0 +1,89 @@
+C51 COMPILER V9.59.0.0   KEY                                                               06/09/2023 14:45:45 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\KEY.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE KEY.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\KEY.lst)
+                    - TABS(2) OBJECT(.\Objects\KEY.obj)
+
+line level    source
+
+   1          #include "KEY.h"
+   2          
+   3          uc Key_val;
+   4          uc Key_state;
+   5          uc Cont;
+   6          bit K8_Press;
+   7          bit K9_Press;
+   8          
+   9          void KBD()
+  10          {
+  11   1        uc Key1,Key2;
+  12   1        uc Key_temp=0;
+  13   1        
+  14   1        P32=1;P33=1;P42=0;P44=0;
+  15   1        if(P32==0){Key1=0X0B;}
+  16   1        if(P33==0){Key1=0X07;}
+  17   1        if(P32==1&&P33==1){Key1=0X0F;}
+  18   1        
+  19   1        P32=0;P33=0;P42=1;P44=1;
+  20   1        if(P42==0){Key2=0XB0;}
+  21   1        if(P44==0){Key2=0X70;}
+  22   1        if(P42==1&&P44==1){Key2=0XF0;}
+  23   1        
+  24   1        Key_temp=Key1|Key2;
+  25   1        
+  26   1        switch(Key_state)
+  27   1        {
+  28   2          case 0: if(Key_temp!=0xff){Key_state=1;}
+  29   2            break;
+  30   2          case 1: if(Key_temp==0xff){Key_state=0;}
+  31   2                  else
+  32   2                  {
+  33   3                    switch(Key_temp)
+  34   3                    {
+  35   4                      case 0X77:Key_val=4;break;
+  36   4                      case 0X7B:Key_val=5;break;
+  37   4                      case 0XB7:Key_val=8;Cont=8;K8_Press=1;break;
+  38   4                      case 0XBB:Key_val=9;Cont=9;K9_Press=1;break;
+  39   4                    }
+  40   3                    Key_state=2;
+  41   3                  }
+  42   2            break;
+  43   2          case 2:
+  44   2            if(Key_temp==0xff)
+  45   2            {
+  46   3              Key_state=0;
+  47   3              K8_Press=0;
+  48   3              K9_Press=0;
+  49   3            }
+  50   2            break;
+  51   2        }
+  52   1      }
+  53          
+  54          uc KEY()
+C51 COMPILER V9.59.0.0   KEY                                                               06/09/2023 14:45:45 PAGE 2   
+
+  55          {
+  56   1        uc KeyNum;
+  57   1        KBD();
+  58   1        
+  59   1        KeyNum=Key_val;
+  60   1        Key_val=0;
+  61   1        return KeyNum;
+  62   1      }
+  63          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    167    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3       3
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      2    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,66 @@
+C51 COMPILER V9.59.0.0   KEY                                                               12/31/2022 18:47:22 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\KEY.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE BSP\src\KEY.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\BSP\inc;.\TOOL\inc) DEBUG O
+                    -BJECTEXTEND PRINT(.\Listings\KEY.lst) TABS(2) OBJECT(.\Objects\KEY.obj)
+
+line level    source
+
+   1          #include "KEY.h"
+   2          #include "Delay.h"
+   3          
+   4          unsigned char KeyNum;
+   5          unsigned char MatrixKey()
+   6          {
+   7   1      
+   8   1        P3|=0X3F;
+   9   1        P4|=0X14;
+  10   1        P30=0;
+  11   1        if(P44==0){Delay20ms();while(P44==0);Delay20ms();KeyNum=1;}
+  12   1        if(P42==0){Delay20ms();while(P44==0);Delay20ms();KeyNum=2;}
+  13   1        if(P35==0){Delay20ms();while(P44==0);Delay20ms();KeyNum=3;}
+  14   1        if(P34==0){Delay20ms();while(P44==0);Delay20ms();KeyNum=4;}
+  15   1        
+  16   1        P3|=0X3F;
+  17   1        P4|=0X14;
+  18   1        P31=0;
+  19   1        if(P44==0){Delay20ms();while(P44==0);Delay20ms();KeyNum=5;}
+  20   1        if(P42==0){Delay20ms();while(P44==0);Delay20ms();KeyNum=6;}
+  21   1        if(P35==0){Delay20ms();while(P44==0);Delay20ms();KeyNum=7;}
+  22   1        if(P34==0){Delay20ms();while(P44==0);Delay20ms();KeyNum=8;}
+  23   1        
+  24   1        P3|=0X3F;
+  25   1        P4|=0X14;
+  26   1        P32=0;
+  27   1        if(P44==0){Delay20ms();while(P44==0);Delay20ms();KeyNum=9;}
+  28   1        if(P42==0){Delay20ms();while(P44==0);Delay20ms();KeyNum=10;}
+  29   1        if(P35==0){Delay20ms();while(P44==0);Delay20ms();KeyNum=11;}
+  30   1        if(P34==0){Delay20ms();while(P44==0);Delay20ms();KeyNum=12;}
+  31   1        
+  32   1        P3|=0X3F;
+  33   1        P4|=0X14;
+  34   1        P33=0;
+  35   1        if(P44==0){Delay20ms();while(P44==0);Delay20ms();KeyNum=13;}
+  36   1        if(P42==0){Delay20ms();while(P44==0);Delay20ms();KeyNum=14;}
+  37   1        if(P35==0){Delay20ms();while(P44==0);Delay20ms();KeyNum=15;}
+  38   1        if(P34==0){Delay20ms();while(P44==0);Delay20ms();KeyNum=16;}
+  39   1        return KeyNum;
+  40   1      }
+  41          
+  42          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    275    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      1    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

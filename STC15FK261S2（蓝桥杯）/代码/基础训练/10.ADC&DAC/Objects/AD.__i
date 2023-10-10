@@ -1,0 +1,1 @@
+"BSP\src\AD.c" OPTIMIZE (8,SPEED) BROWSE INCDIR(.\BSP\inc;.\TOOL\inc) DEBUG OBJECTEXTEND PRINT(.\Listings\AD.lst) TABS (2) OBJECT(.\Objects\AD.obj)

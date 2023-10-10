@@ -1,0 +1,418 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              06/06/2023 15:08:24 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.ls
+                    -t) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "main.h"
+   2          #include "string.h"
+   3          #include <stdio.h>
+   4          /******变量定义区******/
+   5          uc Interface_Data;
+   6          uc KeyNum;
+   7          f T;
+   8          ui Distance;
+   9          ui Change_Num;
+  10          c T_P=30; //温度参数（范围：0~99）
+  11          c D_P=35; //距离参数（范围：0~99）
+  12          uc Send_Buf[20];
+  13          uc Rec_Buf[15];
+  14          
+  15          bit Interface;  //父界面标志（数据界面、参数界面）
+  16          bit Interface_P;  //子界面标志
+  17          bit KEY_flag; //按键键值读取标志
+  18          bit DS18B20_flag; //温度数据采集标志
+  19          bit Sonic_flag; //超声波测距采集标志
+  20          bit AT24C02_flag; //写入EEPROM标志
+  21          bit P_State;  //参数变动状态
+  22          bit Rec_flag; //串口发送标志
+  23          bit DAC_flag; //DAC开关标志
+  24          bit K12_flag; //K12长短按标志
+  25          bit K13_flag; //K13长短按标志
+  26          bit L1_flag;  //L1亮灭标志
+  27          bit L2_flag;  //L2亮灭标志
+  28          bit led_run;
+  29          /******硬件初始化函数******/
+  30          void Hardware_Init()
+  31          {
+  32   1        LED_Init();
+  33   1        RB_Init();
+  34   1        Timer0Init();
+  35   1        Sonic_Init();
+  36   1        UartInit();
+  37   1        DS18B20_ConvertT();
+  38   1        Delay750ms();
+  39   1      }
+  40          
+  41          void Task_Processing()
+  42          {
+  43   1        /*DS18B20任务处理*/
+  44   1        if(DS18B20_flag==1)
+  45   1        {
+  46   2          DS18B20_flag=0;
+  47   2          DS18B20_ConvertT();
+  48   2          T=DS18B20_ReadT();
+  49   2          /*L1*/
+  50   2          if(T>T_P){L1_flag=1;}
+  51   2          else{L1_flag=0;}
+  52   2        }
+  53   1        /*Sonic任务处理*/
+  54   1        if(Sonic_flag==1)
+C51 COMPILER V9.59.0.0   MAIN                                                              06/06/2023 15:08:24 PAGE 2   
+
+  55   1        {
+  56   2          Sonic_flag=0;
+  57   2          Distance=Sonic_Work();
+  58   2          if(Distance>99){Distance=99;}
+  59   2          /*L2*/
+  60   2          if(Distance<D_P){L2_flag=1;}
+  61   2          else{L2_flag=0;}
+  62   2        }
+  63   1        /*AT24C02任务处理*/
+  64   1        if(AT24C02_flag==1)
+  65   1        {
+  66   2          AT24C02_flag=0;
+  67   2          P_State=0;  
+  68   2          AT24C02_WriteByte(0X00,Change_Num);
+  69   2          Delay5ms();
+  70   2        }
+  71   1        /*DAC任务处理*/
+  72   1        if(DAC_flag==0)   //启动状态
+  73   1        {
+  74   2          if(Distance<=D_P){PCF8591_WriteDA((2/5.0)*255);}
+  75   2          else if(Distance>D_P){PCF8591_WriteDA((4/5.0)*255);}
+  76   2        }
+  77   1        else    //关闭状态
+  78   1        {
+  79   2          PCF8591_WriteDA((0.4/5.0)*255);
+  80   2        }
+  81   1        
+  82   1        /*Uart任务处理*/
+  83   1        if(Rec_flag==1)
+  84   1        {
+  85   2          Rec_flag=0;
+  86   2          /*查询数据指令*/
+  87   2          if(strcmp(Rec_Buf,"ST")==0) 
+  88   2          {
+  89   3            sprintf(Send_Buf,"$%d,%.2f\r\n",Distance,T);
+  90   3            Uart_SendString(Send_Buf);
+  91   3          }
+  92   2          /*查询参数指令*/
+  93   2          else if(strcmp(Rec_Buf,"PARA")==0)
+  94   2          {
+  95   3            sprintf(Send_Buf,"#%d,%d\r\n",(ui)D_P,(ui)T_P);
+  96   3            Uart_SendString(Send_Buf);
+  97   3          }
+  98   2          else
+  99   2          {
+ 100   3            Uart_SendString("ERROR\r\n");
+ 101   3          }
+ 102   2        }
+ 103   1        /*
+ 104   1        sprintf(Send_Buf,"#%d,%d\r\n",D_P,T_P)打印乱码;
+ 105   1        查找原因：原来%d，代表的是将int型数据转换为十进制字符的作用，既然是int型，
+ 106   1        那他占用空间为至少2个字节，那么我们定义的D_P和T_P仅是char 占空间一字节，
+ 107   1        所以函数在转换时，会错误的转换temp空间外的一字节空间的数据，这是未知的数据，所以会出现打印乱码情况。
+ 108   1        */
+ 109   1      }
+ 110          /*应用LED函数（为防止闪烁，运行时关闭中断）*/
+ 111          void USE_LED()
+ 112          {
+ 113   1        LED_Init();
+ 114   1        if(L1_flag==1){L1=0;}
+ 115   1        else{L1=1;}
+ 116   1        if(L2_flag==1){L2=0;}
+C51 COMPILER V9.59.0.0   MAIN                                                              06/06/2023 15:08:24 PAGE 3   
+
+ 117   1        else{L2=1;}
+ 118   1        if(DAC_flag==0){L3=0;}
+ 119   1        else{L3=1;}
+ 120   1        L4=1;L5=1;L6=1;L7=1;L8=1;
+ 121   1        
+ 122   1        P2&=0X1F;
+ 123   1      }
+ 124          
+ 125          /******应用按键函数（长按：超过一秒则触发长按。短按：按下时间没超过1s弹起触发短按）******/
+ 126          void USE_KEY()
+ 127          {
+ 128   1        if(KEY_flag==1)
+ 129   1        {
+ 130   2          KEY_flag=0;
+ 131   2          KeyNum=KEY();
+ 132   2          /* "短按键(按下未超过1s弹起触发)"S13-切换主界面（数据、参数） */
+ 133   2          if(Cont==13&&K13_flag==0&&K13_Press==0)
+ 134   2          {
+ 135   3            Cont=0;
+ 136   3            Interface=~Interface;
+ 137   3            Interface_P=0;
+ 138   3            Interface_Data=0;
+ 139   3            /*参数变动-触发EEPROM保存变动次数*/
+ 140   3            if(Interface==0)
+ 141   3            {
+ 142   4              if(P_State==1)
+ 143   4              {
+ 144   5                Change_Num++;
+ 145   5                AT24C02_flag=1;
+ 146   5              }
+ 147   4            }
+ 148   3          }
+ 149   2          /* "长按键(按下超过1s触发)"S13-切换DAC输出功能 */
+ 150   2          else if(Cont==13&&K13_flag==1)
+ 151   2          {
+ 152   3            Cont=0;
+ 153   3            K13_flag=0;
+ 154   3            DAC_flag=~DAC_flag;
+ 155   3          }
+ 156   2          
+ 157   2          /* "短按键(按下未超过1s弹起触发)"S12-切换子界面（数据、参数） */
+ 158   2          if(Cont==12&&K12_flag==0&&K12_Press==0)
+ 159   2          {
+ 160   3            Cont=0;
+ 161   3            if(Interface==0){Interface_Data++;Interface_Data%=3;}
+ 162   3            else if(Interface==1){Interface_P=~Interface_P;}
+ 163   3          }
+ 164   2          /* "长按键(按下超过1s触发)"S12-重置参数变动次数 */
+ 165   2          else if(Cont==12&&K12_flag==1)
+ 166   2          {
+ 167   3            Cont=0;
+ 168   3            K12_flag=0;
+ 169   3            Change_Num=0;
+ 170   3            AT24C02_flag=1;
+ 171   3          }
+ 172   2          
+ 173   2          /*S16-参数减按键*/
+ 174   2          if(KeyNum==16)
+ 175   2          {
+ 176   3            if(Interface_P==0){T_P-=2;P_State=1;}
+ 177   3            else{D_P-=5;P_State=1;}
+ 178   3            
+C51 COMPILER V9.59.0.0   MAIN                                                              06/06/2023 15:08:24 PAGE 4   
+
+ 179   3            /*参数范围处理*/
+ 180   3            if(T_P<0){T_P=T_P+100;}
+ 181   3            if(D_P<0){D_P=D_P+100;}
+ 182   3            
+ 183   3          }
+ 184   2          /*S17-参数加按键*/
+ 185   2          if(KeyNum==17)
+ 186   2          {
+ 187   3            if(Interface_P==0){T_P+=2;P_State=1;}
+ 188   3            else{D_P+=5;P_State=1;}
+ 189   3            
+ 190   3            /*参数范围处理*/
+ 191   3            if(T_P>99){T_P=T_P-100;}
+ 192   3            if(D_P>99){D_P=D_P-100;}
+ 193   3          }
+ 194   2        }
+ 195   1      }
+ 196          
+ 197          /******应用数码管函数******/
+ 198          void USE_SMG()
+ 199          {
+ 200   1        /*数据界面*/
+ 201   1        if(Interface==0)
+ 202   1        {
+ 203   2          /*温度数据显示*/
+ 204   2          if(Interface_Data==0)
+ 205   2          {
+ 206   3            Nixie_SetBuf(0,Nodot_SMG[12]);  //标识符-C
+ 207   3            Nixie_SetBuf(1,0XFF);
+ 208   3            Nixie_SetBuf(2,0XFF);
+ 209   3            Nixie_SetBuf(3,0XFF);
+ 210   3            Nixie_SetBuf(4,Nodot_SMG[((ui)(T*100))/1000]);
+ 211   3            Nixie_SetBuf(5,dot_SMG[((ui)(T*100))/100%10]);
+ 212   3            Nixie_SetBuf(6,Nodot_SMG[((ui)(T*100))/10%10]);
+ 213   3            Nixie_SetBuf(7,Nodot_SMG[((ui)(T*100))%10]);
+ 214   3          }
+ 215   2          /*距离数据显示*/
+ 216   2          else if(Interface_Data==1)
+ 217   2          {
+ 218   3            Nixie_SetBuf(0,0XC7); //标识符-L
+ 219   3            Nixie_SetBuf(1,0XFF);
+ 220   3            Nixie_SetBuf(2,0XFF);
+ 221   3            Nixie_SetBuf(3,0XFF);
+ 222   3            Nixie_SetBuf(4,0XFF);
+ 223   3            Nixie_SetBuf(5,0XFF);
+ 224   3            Nixie_SetBuf(6,Nodot_SMG[Distance/10]);
+ 225   3            Nixie_SetBuf(7,Nodot_SMG[Distance%10]);
+ 226   3          }
+ 227   2          /*变更次数显示*/
+ 228   2          else if(Interface_Data==2)
+ 229   2          {
+ 230   3            Nixie_SetBuf(0,0XC8); //标识符-n
+ 231   3            Nixie_SetBuf(1,0XFF);
+ 232   3            Nixie_SetBuf(2,0XFF);
+ 233   3            if(Change_Num>9999){Nixie_SetBuf(3,Nodot_SMG[Change_Num/10000]);}
+ 234   3            else{Nixie_SetBuf(3,0XFF);}
+ 235   3            if(Change_Num>999){Nixie_SetBuf(4,Nodot_SMG[Change_Num/1000%10]);}
+ 236   3            else{Nixie_SetBuf(4,0XFF);}
+ 237   3            if(Change_Num>99){Nixie_SetBuf(5,Nodot_SMG[Change_Num/100%10]);}
+ 238   3            else{Nixie_SetBuf(5,0XFF);}
+ 239   3            if(Change_Num>9){Nixie_SetBuf(6,Nodot_SMG[Change_Num/10%10]);}
+ 240   3            else{Nixie_SetBuf(6,0XFF);}
+C51 COMPILER V9.59.0.0   MAIN                                                              06/06/2023 15:08:24 PAGE 5   
+
+ 241   3            
+ 242   3            Nixie_SetBuf(7,Nodot_SMG[Change_Num%10]);
+ 243   3          }
+ 244   2        }
+ 245   1        /*参数界面*/
+ 246   1        else
+ 247   1        {
+ 248   2          /*温度参数*/
+ 249   2          if(Interface_P==0)
+ 250   2          {
+ 251   3            Nixie_SetBuf(0,0X8C); //标识符-P
+ 252   3            Nixie_SetBuf(1,0XFF);
+ 253   3            Nixie_SetBuf(2,0XFF);
+ 254   3            Nixie_SetBuf(3,Nodot_SMG[1]); //编号1
+ 255   3            Nixie_SetBuf(4,0XFF);
+ 256   3            Nixie_SetBuf(5,0XFF);
+ 257   3            Nixie_SetBuf(6,Nodot_SMG[T_P/10]);
+ 258   3            Nixie_SetBuf(7,Nodot_SMG[T_P%10]);
+ 259   3          }
+ 260   2          /*距离参数*/
+ 261   2          else
+ 262   2          {
+ 263   3            Nixie_SetBuf(0,0X8C); //标识符-P
+ 264   3            Nixie_SetBuf(1,0XFF);
+ 265   3            Nixie_SetBuf(2,0XFF);
+ 266   3            Nixie_SetBuf(3,Nodot_SMG[2]); //编号2
+ 267   3            Nixie_SetBuf(4,0XFF);
+ 268   3            Nixie_SetBuf(5,0XFF);
+ 269   3            Nixie_SetBuf(6,Nodot_SMG[D_P/10]);
+ 270   3            Nixie_SetBuf(7,Nodot_SMG[D_P%10]);
+ 271   3          }
+ 272   2        }
+ 273   1      }
+ 274          
+ 275          void main()
+ 276          {
+ 277   1        Hardware_Init();
+ 278   1        while(1)
+ 279   1        {
+ 280   2          if(led_run==1){led_run=0;USE_LED();}
+ 281   2          
+ 282   2          USE_SMG();
+ 283   2          USE_KEY();
+ 284   2          Task_Processing();
+ 285   2        }
+ 286   1      }
+ 287          
+ 288          void Timer0_Routine() interrupt 1
+ 289          {
+ 290   1        static uc SMG_Count;
+ 291   1        static uc KEY_Count;
+ 292   1        static uc DS18B20_Count;
+ 293   1        static uc Sonic_Count;
+ 294   1        static ui K12_Count;
+ 295   1        static ui K13_Count;
+ 296   1        
+ 297   1        led_run=1;  //LED运行不受中断影响
+ 298   1        
+ 299   1        KEY_Count++;
+ 300   1        if(KEY_Count==10)
+ 301   1        {
+ 302   2          KEY_Count=0;
+C51 COMPILER V9.59.0.0   MAIN                                                              06/06/2023 15:08:24 PAGE 6   
+
+ 303   2          KEY_flag=1;
+ 304   2        }
+ 305   1        SMG_Count++;
+ 306   1        if(SMG_Count==2)
+ 307   1        {
+ 308   2          SMG_Count=0;
+ 309   2          Nixie_Loop();
+ 310   2        }
+ 311   1        DS18B20_Count++;
+ 312   1        if(DS18B20_Count==200)
+ 313   1        {
+ 314   2          DS18B20_Count=0;
+ 315   2          DS18B20_flag=1;
+ 316   2        }
+ 317   1        Sonic_Count++;
+ 318   1        if(Sonic_Count==200)
+ 319   1        {
+ 320   2          Sonic_Count=0;
+ 321   2          Sonic_flag=1;
+ 322   2        }
+ 323   1        /*K12长短按判断*/
+ 324   1        if(K12_Press==1)
+ 325   1        {
+ 326   2          K12_Count++;
+ 327   2          if(K12_Count>=1000)
+ 328   2          {
+ 329   3            K12_flag=1;
+ 330   3            K12_Press=0;
+ 331   3            K12_Count=0;
+ 332   3          }
+ 333   2        }
+ 334   1        else{K12_Count=0;K12_flag=0;}
+ 335   1        /*K13长短按判断*/
+ 336   1        if(K13_Press==1)
+ 337   1        {
+ 338   2          K13_Count++;
+ 339   2          if(K13_Count>=1000)
+ 340   2          {
+ 341   3            K13_flag=1;
+ 342   3            K13_Press=0;
+ 343   3            K13_Count=0;
+ 344   3          }
+ 345   2        }
+ 346   1        else{K13_Count=0;K13_flag=0;}
+ 347   1      }
+ 348          
+ 349          void Uart_Routine(void) interrupt 4
+ 350          {
+ 351   1        uc temp;
+ 352   1        bit Rx_State;
+ 353   1        static uc i;
+ 354   1        
+ 355   1        if(RI==1)
+ 356   1        {
+ 357   2          RI=0;
+ 358   2          temp=SBUF;
+ 359   2          
+ 360   2          if(Rx_State==0)
+ 361   2          {
+ 362   3            if(temp=='\r')
+ 363   3            {
+ 364   4              Rx_State=1;
+C51 COMPILER V9.59.0.0   MAIN                                                              06/06/2023 15:08:24 PAGE 7   
+
+ 365   4            }
+ 366   3            else
+ 367   3            {
+ 368   4              Rec_Buf[i++]=temp;
+ 369   4            }
+ 370   3          }
+ 371   2          else if(Rx_State==1)
+ 372   2          {
+ 373   3            if(temp=='\n')
+ 374   3            {
+ 375   4              Rec_flag=1; //表示数据接收完
+ 376   4              Rec_Buf[i]='\0';
+ 377   4              i=0;
+ 378   4              Rx_State=0;
+ 379   4            }
+ 380   3          }
+ 381   2        }
+ 382   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1727    ----
+   CONSTANT SIZE    =     68    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     56    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =     14       1
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

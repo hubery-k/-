@@ -1,0 +1,82 @@
+C51 COMPILER V9.59.0.0   DELAY                                                             04/07/2023 20:37:18 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE DELAY
+OBJECT MODULE PLACED IN .\Objects\Delay.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE Delay.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\Delay.
+                    -lst) TABS(2) OBJECT(.\Objects\Delay.obj)
+
+line level    source
+
+   1          #include "Delay.h"
+   2          
+   3          void Delay20ms()    //@11.0592MHz
+   4          {
+   5   1        unsigned char i, j;
+   6   1      
+   7   1        i = 216;
+   8   1        j = 37;
+   9   1        do
+  10   1        {
+  11   2          while (--j);
+  12   2        } while (--i);
+  13   1      }
+  14          
+  15          void Delay5ms()   //@11.0592MHz
+  16          {
+  17   1        unsigned char i, j;
+  18   1      
+  19   1        i = 54;
+  20   1        j = 199;
+  21   1        do
+  22   1        {
+  23   2          while (--j);
+  24   2        } while (--i);
+  25   1      }
+  26          void Delay1ms()   //@11.0592MHz
+  27          {
+  28   1        unsigned char i, j;
+  29   1      
+  30   1        _nop_();
+  31   1        _nop_();
+  32   1        _nop_();
+  33   1        i = 11;
+  34   1        j = 190;
+  35   1        do
+  36   1        {
+  37   2          while (--j);
+  38   2        } while (--i);
+  39   1      }
+  40          void Delay100ms()   //@11.0592MHz
+  41          {
+  42   1        unsigned char i, j, k;
+  43   1      
+  44   1        _nop_();
+  45   1        _nop_();
+  46   1        i = 5;
+  47   1        j = 52;
+  48   1        k = 195;
+  49   1        do
+  50   1        {
+  51   2          do
+  52   2          {
+  53   3            while (--k);
+  54   3          } while (--j);
+C51 COMPILER V9.59.0.0   DELAY                                                             04/07/2023 20:37:18 PAGE 2   
+
+  55   2        } while (--i);
+  56   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     45    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

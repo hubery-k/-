@@ -1,0 +1,271 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              04/07/2023 23:26:29 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.ls
+                    -t) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "LED.h"
+   2          #include "RB.h"
+   3          #include "Nixie.h"
+   4          #include "Timer.h"
+   5          #include "KEY.h"
+   6          #include "AT24C02.h"
+   7          #include "PCF8591.h"
+   8          #include "Delay.h"
+   9          uc code Nodot_SMG[]={~0x3F,~0x06,~0x5B,~0x4F,~0x66,~0x6D,~0x7D,~0x07,~0x7F,~0x6F,~0x77,~0x7C,~0x39,~0x5E,~
+             -0x79,~0x71};
+  10          uc code dot_SMG[]={~0xbf,~0x86,~0xdb,~0xcf,~0xe6,~0xed,~0xfd,~0x87,~0xff,~0xef,~0xf7,~0xfc,~0xb9,~0xde,~0x
+             -f9,~0xf1};
+  11          
+  12          uc KeyNum;    //按键键值
+  13          uc Interface;   //显示界面变量
+  14          f adc_v;    //采集到的电压值
+  15          ui SMG_v;   //用来在数码管上显示（电压值*100）
+  16          f V_parameter=3.0;    //电压参数
+  17          uli Num;    //计数值
+  18          ui T1_Count0;   //定时器1计数变量（用于L1）
+  19          uc faults;    //用来计无效按键次数
+  20          bit AD_flag;    //AD采集数据标志位
+  21          bit L1_flag;    //LED1标志位
+  22          bit Save_flag;    //AT24C02保存电压参数标志位
+  23          uc State;
+  24          f temp;
+  25          
+  26          /*系统初始化函数*/
+  27          void Sys_Init()
+  28          {
+  29   1        LED_Control(0X00);    //关闭LED
+  30   1        RB_Control(0X00);   //关闭蜂鸣器、继电器
+  31   1      }
+  32          
+  33          /*PCF8591应用函数-主要用于AD数据采集*/
+  34          void USE_PCF8591()
+  35          {
+  36   1        /*AD数据采集与转换*/
+  37   1        if(AD_flag==1)
+  38   1        {
+  39   2          AD_flag=0;
+  40   2          adc_v=AD_Read()*(5.0/255);
+  41   2        }
+  42   1        SMG_v=adc_v*100;
+  43   1        
+  44   1        /*L1点亮与熄灭*/
+  45   1        if(adc_v<V_parameter){TR1=1;}
+  46   1        else if(adc_v>=V_parameter){TR1=0;L1_flag=0;T1_Count0=0;}
+  47   1        
+  48   1        /*Num计数触发*/
+  49   1        switch(State)
+  50   1        {
+  51   2          case 0:if(adc_v>V_parameter){State=1;} break;
+  52   2          case 1:if(adc_v<V_parameter){State=0;Num++;} break;
+C51 COMPILER V9.59.0.0   MAIN                                                              04/07/2023 23:26:29 PAGE 2   
+
+  53   2        }
+  54   1      }
+  55          
+  56          /*AT24C02应用函数-用于保存电压参数（掉电不丢失）*/
+  57          void USE_AT24C02()
+  58          {
+  59   1        if(Save_flag==1)
+  60   1        {
+  61   2          Save_flag=0;
+  62   2          EEPROM_Write(0X00,V_parameter*10);
+  63   2          Delay5ms();   //写入最大需要5ms
+  64   2        }
+  65   1      }
+  66          
+  67          /*LED应用函数*/
+  68          void USE_LED()
+  69          {
+  70   1        LED_Init();
+  71   1        if(L1_flag==1){L1=0;}
+  72   1        else{L1=1;}
+  73   1        
+  74   1        if(Num%2!=0){L2=0;}
+  75   1        else{L2=1;}
+  76   1        
+  77   1        if(faults>=3){L3=0;}
+  78   1        else{L3=1;}
+  79   1        
+  80   1        P2&=0X1F;   //锁存
+  81   1      }
+  82          
+  83          /*按键应用函数*/
+  84          void USE_KEY()
+  85          {
+  86   1        KeyNum=KEY_Matrix();
+  87   1        
+  88   1        /*有效操作*/
+  89   1        if(KeyNum==12)    //S12-显示界面切换按键
+  90   1        {
+  91   2          Interface++;
+  92   2          if(Interface==3){Interface=0;}
+  93   2          if(Interface==2){Save_flag=1;}    //从参数界面退出，电压参数*10倍保存
+  94   2          faults=0;
+  95   2        }
+  96   1        if(Interface==2)    //在计数界面下清零有效
+  97   1        {
+  98   2          if(KeyNum==13)    //S13-计数清零按键
+  99   2          {
+ 100   3            Num=0;
+ 101   3            faults=0;
+ 102   3          }
+ 103   2        }
+ 104   1        if(Interface==1)    //在参数设置界面下S16和S17有效
+ 105   1        {
+ 106   2          if(KeyNum==16)    //S16-电压参数加按键（每次增加0.5V）
+ 107   2          {
+ 108   3            V_parameter+=0.5;
+ 109   3            if(V_parameter>5.0){V_parameter=0;}
+ 110   3            faults=0;
+ 111   3          } 
+ 112   2          if(KeyNum==17)    //S17-电压参数减按键（每次减小0.5V）
+ 113   2          {
+ 114   3            V_parameter-=0.5;
+C51 COMPILER V9.59.0.0   MAIN                                                              04/07/2023 23:26:29 PAGE 3   
+
+ 115   3            if(V_parameter<0){V_parameter=5.0;}
+ 116   3            faults=0;
+ 117   3          }
+ 118   2        }
+ 119   1        
+ 120   1        /*误操作*/
+ 121   1        if(Interface!=1)
+ 122   1        {
+ 123   2          if(KeyNum==16||KeyNum==17){faults+=1;}
+ 124   2        }
+ 125   1        if(Interface!=2)
+ 126   1        {
+ 127   2          if(KeyNum==13){faults+=1;}
+ 128   2        }
+ 129   1      }
+ 130          
+ 131          void USE_SMG()
+ 132          {
+ 133   1        if(Interface==0)
+ 134   1        {
+ 135   2          Nixie_SetBuf(0,0XC1);   //标识符-U
+ 136   2          Nixie_SetBuf(1,0XFF);
+ 137   2          Nixie_SetBuf(2,0XFF);
+ 138   2          Nixie_SetBuf(3,0XFF);
+ 139   2          Nixie_SetBuf(4,0XFF);
+ 140   2          Nixie_SetBuf(5,dot_SMG[SMG_v/100]);
+ 141   2          Nixie_SetBuf(6,Nodot_SMG[SMG_v/10%10]);
+ 142   2          Nixie_SetBuf(7,Nodot_SMG[SMG_v%10]);
+ 143   2        }
+ 144   1        else if(Interface==1)
+ 145   1        {
+ 146   2          Nixie_SetBuf(0,0X8C);   //标识符-P
+ 147   2          Nixie_SetBuf(1,0XFF);
+ 148   2          Nixie_SetBuf(2,0XFF);
+ 149   2          Nixie_SetBuf(3,0XFF);
+ 150   2          Nixie_SetBuf(4,0XFF);
+ 151   2          Nixie_SetBuf(5,dot_SMG[(ui)(V_parameter*100)/100]);
+ 152   2          Nixie_SetBuf(6,Nodot_SMG[(ui)(V_parameter*100)/10%10]);
+ 153   2          Nixie_SetBuf(7,Nodot_SMG[(ui)(V_parameter*100)%10]);
+ 154   2        }
+ 155   1        else if(Interface==2)
+ 156   1        {
+ 157   2          Nixie_SetBuf(0,0X89);   //标识符-N（显示不了N只能显示H）
+ 158   2          if(Num>999999){Nixie_SetBuf(1,Nodot_SMG[Num/1000000]);}
+ 159   2          else{Nixie_SetBuf(1,0XFF);}
+ 160   2          
+ 161   2          if(Num>99999){Nixie_SetBuf(2,Nodot_SMG[Num/100000%10]);}
+ 162   2          else{Nixie_SetBuf(2,0XFF);}
+ 163   2          
+ 164   2          if(Num>9999){Nixie_SetBuf(3,Nodot_SMG[Num/10000%10]);}
+ 165   2          else{Nixie_SetBuf(3,0XFF);}
+ 166   2          
+ 167   2          if(Num>999){Nixie_SetBuf(4,Nodot_SMG[Num/1000%10]);}
+ 168   2          else{Nixie_SetBuf(4,0XFF);}
+ 169   2          
+ 170   2          if(Num>99){Nixie_SetBuf(5,Nodot_SMG[Num/100%10]);}
+ 171   2          else{Nixie_SetBuf(5,0XFF);}
+ 172   2          
+ 173   2          if(Num>9){Nixie_SetBuf(6,Nodot_SMG[Num/10%10]);}
+ 174   2          else{Nixie_SetBuf(6,0XFF);}
+ 175   2      
+ 176   2          Nixie_SetBuf(7,Nodot_SMG[Num%10]);
+C51 COMPILER V9.59.0.0   MAIN                                                              04/07/2023 23:26:29 PAGE 4   
+
+ 177   2        }
+ 178   1      }
+ 179          
+ 180          
+ 181          void Timer0_Routine(void) interrupt 1
+ 182          {
+ 183   1        static uc T0_Count0;
+ 184   1        static uc T0_Count1;
+ 185   1        static uc AD_Count;
+ 186   1        
+ 187   1        T0_Count0++;T0_Count1++;
+ 188   1        if(T0_Count0==2)
+ 189   1        {
+ 190   2          T0_Count0=0;
+ 191   2          Nixie_Loop();
+ 192   2        }
+ 193   1        if(T0_Count1==10)
+ 194   1        {
+ 195   2          T0_Count1=0;
+ 196   2          KEY_Loop();
+ 197   2        }
+ 198   1        
+ 199   1        AD_Count++;
+ 200   1        if(AD_Count==50)
+ 201   1        {
+ 202   2          AD_flag=1;
+ 203   2        }
+ 204   1      }
+ 205          
+ 206          void Timer1_Routine(void) interrupt 3
+ 207          {
+ 208   1        T1_Count0++;
+ 209   1        if(T1_Count0>5000)    //大于5s
+ 210   1        {
+ 211   2          T1_Count0=0;
+ 212   2          L1_flag=1;
+ 213   2          TR1=0;    //停止定时
+ 214   2        }
+ 215   1      }
+ 216          
+ 217          void main()
+ 218          {
+ 219   1        Sys_Init();
+ 220   1        Timer0Init();
+ 221   1        Timer1Init();
+ 222   1        temp=EEPROM_Read(0X00)/10.0;//除以10的时候必须要加上.0
+ 223   1        if(temp>=0&&temp<=5.0){V_parameter=temp;}
+ 224   1        else{V_parameter=3.0;}
+ 225   1        
+ 226   1        while(1)
+ 227   1        {
+ 228   2          EA=0;
+ 229   2          USE_LED();
+ 230   2          EA=1;
+ 231   2          USE_AT24C02();
+ 232   2          USE_PCF8591();
+ 233   2          USE_KEY();
+ 234   2          USE_SMG();
+ 235   2        }
+ 236   1      }
+ 237          /*调用LED函数时关闭中断是为了让中断不影响LED的运行，否则LED运行状况异常会乱闪*/
+
+C51 COMPILER V9.59.0.0   MAIN                                                              04/07/2023 23:26:29 PAGE 5   
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1579    ----
+   CONSTANT SIZE    =     32    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     27    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      3    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

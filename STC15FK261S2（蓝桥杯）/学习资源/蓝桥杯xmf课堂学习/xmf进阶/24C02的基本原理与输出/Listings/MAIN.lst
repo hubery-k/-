@@ -1,0 +1,164 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              04/04/2022 22:32:09 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\MAIN.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE MAIN.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\MAIN
+                    -.lst) TABS(2) OBJECT(.\Objects\MAIN.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          #include "iic.h"
+   3          
+   4          unsigned char dat1=0,dat2=0,dat3=0;
+   5          
+   6          unsigned char code duanma[]={0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0x88,0x83,0xc6,0xa1,0x86,0x
+             -8e};
+   7          void Sec_HC573(unsigned char n)
+   8          {
+   9   1        switch(n)
+  10   1        {
+  11   2          case 4:P2=(P2&0X1F)|0X80;break;
+  12   2          case 5:P2=(P2&0X1F)|0Xa0;break;
+  13   2          case 6:P2=(P2&0X1F)|0Xc0;break;
+  14   2          case 7:P2=(P2&0X1F)|0Xe0;break;
+  15   2          case 0:P2=(P2&0X1F)|0X00;break;
+  16   2        }
+  17   1      }
+  18          void Delay(unsigned int t)
+  19          {
+  20   1        while(t--);
+  21   1      }
+  22          //=========================24C02====================
+  23          unsigned char tmp=0;
+  24          void Write_24C02(unsigned char addr,dat)
+  25          {
+  26   1        IIC_Start(); 
+  27   1        IIC_SendByte(0xa0);
+  28   1        IIC_WaitAck();
+  29   1        IIC_SendByte(addr);
+  30   1        IIC_WaitAck();
+  31   1        IIC_SendByte(dat);
+  32   1        IIC_WaitAck();
+  33   1        IIC_Stop();
+  34   1      }
+  35          
+  36          unsigned char Read_24C02(unsigned char addr)
+  37          {
+  38   1        IIC_Start(); 
+  39   1        IIC_SendByte(0xa0);
+  40   1        IIC_WaitAck();
+  41   1        IIC_SendByte(addr);
+  42   1        IIC_WaitAck();
+  43   1        
+  44   1        IIC_Start(); 
+  45   1        IIC_SendByte(0xa1);
+  46   1        IIC_WaitAck();
+  47   1        tmp=IIC_RecByte(); 
+  48   1        IIC_SendAck(1);
+  49   1        IIC_Stop();
+  50   1        return tmp;
+  51   1      }
+  52          //================SMG==================================
+  53          void DisplaySMG_ALL()
+C51 COMPILER V9.59.0.0   MAIN                                                              04/04/2022 22:32:09 PAGE 2   
+
+  54          {
+  55   1        Sec_HC573(6);
+  56   1        P0=0xff;
+  57   1        Sec_HC573(7);
+  58   1        P0=0xff;
+  59   1        Sec_HC573(0);
+  60   1      }
+  61          void DisplaySMG_Bit(unsigned char pos,dat)
+  62          {
+  63   1        Sec_HC573(7);
+  64   1        P0=0xff;
+  65   1        
+  66   1        Sec_HC573(6);
+  67   1        P0=0x01<<pos;
+  68   1        Sec_HC573(7);
+  69   1        P0=dat;
+  70   1        Sec_HC573(0);
+  71   1      }
+  72          void DisplaySMG()
+  73          {
+  74   1        DisplaySMG_Bit(2,0xbf);
+  75   1        Delay(500);
+  76   1        DisplaySMG_Bit(5,0xbf);
+  77   1        Delay(500);
+  78   1        
+  79   1        DisplaySMG_Bit(0,duanma[dat1/10]);
+  80   1        Delay(500);
+  81   1        DisplaySMG_Bit(1,duanma[dat1%10]);
+  82   1        Delay(500);
+  83   1        DisplaySMG_Bit(3,duanma[dat2/10]);
+  84   1        Delay(500);
+  85   1        DisplaySMG_Bit(4,duanma[dat2%10]);
+  86   1        Delay(500);
+  87   1        DisplaySMG_Bit(6,duanma[dat3/10]);
+  88   1        Delay(500);
+  89   1        DisplaySMG_Bit(7,duanma[dat3%10]);
+  90   1        Delay(500);
+  91   1        DisplaySMG_ALL();
+  92   1      }
+  93          //====================³õÊ¼»¯====================
+  94          void Init_Sys()
+  95          {
+  96   1        Sec_HC573(4);
+  97   1        P0=0xff;
+  98   1        Sec_HC573(5);
+  99   1        P0=0x00;
+ 100   1        Sec_HC573(0);
+ 101   1        
+ 102   1        dat1=Read_24C02(0x01);
+ 103   1        dat2=Read_24C02(0x03);
+ 104   1        dat3=Read_24C02(0x05);
+ 105   1        
+ 106   1        dat1+=1;dat2+=2;dat3+=3;
+ 107   1        if(dat1>10)
+ 108   1        {
+ 109   2          dat1=0;
+ 110   2        }
+ 111   1        if(dat2>20)
+ 112   1        {
+ 113   2          dat2=0;
+ 114   2        }
+ 115   1        if(dat3>30)
+C51 COMPILER V9.59.0.0   MAIN                                                              04/04/2022 22:32:09 PAGE 3   
+
+ 116   1        {
+ 117   2          dat3=0;
+ 118   2        }
+ 119   1        
+ 120   1        
+ 121   1        Write_24C02(0x01,dat1);
+ 122   1        Delay(2000);
+ 123   1        Write_24C02(0x03,dat2);
+ 124   1        Delay(2000);
+ 125   1        Write_24C02(0x05,dat3);
+ 126   1        Delay(2000);
+ 127   1      }
+ 128          void main()
+ 129          {
+ 130   1        Init_Sys();
+ 131   1        while(1)
+ 132   1        {
+ 133   2          DisplaySMG();
+ 134   2        }
+ 135   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    470    ----
+   CONSTANT SIZE    =     16    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      4       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

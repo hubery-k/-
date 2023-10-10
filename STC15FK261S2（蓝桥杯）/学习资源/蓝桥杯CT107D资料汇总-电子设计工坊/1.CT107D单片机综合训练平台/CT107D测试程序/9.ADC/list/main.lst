@@ -1,0 +1,139 @@
+C51 COMPILER V9.52.0.0   MAIN                                                              11/16/2013 16:58:23 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\output\main.obj
+COMPILER INVOKED BY: D:\Program Files\Keil\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND PRINT(.\list\main.lst) TABS(
+                    -2) OBJECT(.\output\main.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          #include "pcf8591.h"
+   3          
+   4          void init_t0(void);
+   5          void init_pcf8591(void);
+   6          void display(unsigned char d);
+   7          
+   8          bit adcflag = 0;
+   9          unsigned char dspflag;
+  10          unsigned char tflag1;
+  11          unsigned char tflag2;
+  12          unsigned char code dsp_code_ca[] = {0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90};
+  13          
+  14          void main(void)
+  15          {
+  16   1        unsigned char adcvalue;
+  17   1        
+  18   1        init_pcf8591();
+  19   1        init_t0();
+  20   1        while(1)
+  21   1        {
+  22   2        display(adcvalue);
+  23   2        if(adcflag == 1)
+  24   2        {
+  25   3          adcvalue = adc_pcf8591();
+  26   3          adcflag = 0;
+  27   3        }     
+  28   2        }
+  29   1      }
+  30          
+  31          void isr_t0(void) interrupt 1
+  32          {
+  33   1        tflag1++;
+  34   1        tflag2++;
+  35   1        if(tflag1 == 16)  //4ms
+  36   1        {
+  37   2        tflag1 = 0;
+  38   2        dspflag++;
+  39   2        if(dspflag == 3)
+  40   2          dspflag = 0;
+  41   2        }
+  42   1        if(tflag2 == 80) //20ms
+  43   1        {
+  44   2        tflag2 = 0;
+  45   2        adcflag = 1;
+  46   2        }
+  47   1      }
+  48          
+  49          void init_t0(void)
+  50          { 
+  51   1        TMOD = 0x02;
+  52   1        TH0 = 0x06;
+  53   1        TL0 = 0x06;
+  54   1        ET0 = 1;
+C51 COMPILER V9.52.0.0   MAIN                                                              11/16/2013 16:58:23 PAGE 2   
+
+  55   1        EA = 1;
+  56   1        TR0 = 1;
+  57   1      }
+  58          
+  59          void init_pcf8591(void)
+  60          {
+  61   1        iic_start();
+  62   1        iic_sendbyte(0x90);
+  63   1        iic_waitack();
+  64   1        iic_sendbyte(CHANNEL_3);
+  65   1        iic_waitack();
+  66   1        iic_stop();
+  67   1        delay(10);
+  68   1      }
+  69          
+  70          void display(unsigned char d)
+  71          {
+  72   1        if((dspflag == 0)&&(d>99))
+  73   1        {
+  74   2          P0 = 0xFF;
+  75   2        P2 |= 0xE0;
+  76   2        P2 &= 0x1F;
+  77   2      
+  78   2        P0 = dsp_code_ca[d/100];
+  79   2        P2 |= 0xE0;
+  80   2        P2 &= 0x1F;
+  81   2        P0 = 0x20;
+  82   2        P2 |= 0xC0;
+  83   2        P2 &= 0x3F;
+  84   2        }
+  85   1        if((dspflag == 1)&&(d>9))
+  86   1        {
+  87   2        P0 = 0xFF;
+  88   2          P2 |= 0xE0;
+  89   2          P2 &= 0x1F;
+  90   2      
+  91   2        P0 = dsp_code_ca[d%100/10];
+  92   2          P2 |= 0xE0;
+  93   2          P2 &= 0x1F;
+  94   2          P0 = 0x40;
+  95   2          P2 |= 0xC0;
+  96   2          P2 &= 0x3F;
+  97   2        } 
+  98   1        if(dspflag == 2)
+  99   1        {
+ 100   2          P0 = 0xFF;
+ 101   2        P2 |= 0xE0;
+ 102   2          P2 &= 0x1F;
+ 103   2      
+ 104   2        P0 = dsp_code_ca[d%100%10]; 
+ 105   2          P2 |= 0xE0;
+ 106   2          P2 &= 0x1F;
+ 107   2          P0 = 0x80;
+ 108   2          P2 |= 0xC0;
+ 109   2          P2 &= 0x3F;
+ 110   2        }  
+ 111   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    255    ----
+   CONSTANT SIZE    =     10    ----
+C51 COMPILER V9.52.0.0   MAIN                                                              11/16/2013 16:58:23 PAGE 3   
+
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

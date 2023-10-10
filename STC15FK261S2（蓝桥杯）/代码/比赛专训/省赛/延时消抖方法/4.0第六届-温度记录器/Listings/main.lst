@@ -1,0 +1,233 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              03/04/2023 20:28:42 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.ls
+                    -t) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "LED.h"
+   2          #include "BUZZER.h"
+   3          #include "RELAY.h"
+   4          #include "DS18B20.h"
+   5          #include "CLOCK.h"
+   6          #include "Timer.h"
+   7          #include "Nixie.h"
+   8          #include "Delay.h"
+   9          #include "KEY.h"
+  10          unsigned char code Donot_SMG[]={0xC0,0xF9,0xA4,0xB0,0x99,0x92,0x82,0xF8,0x80,0x90};
+  11          unsigned char code not_SMG[]={0X40,0X79,0X24,0X30,0X19,0X12,0X02,0X78,0X00,0X10};
+  12          unsigned char Time[]={0X50,0X59,0X23};    //秒，分，时(BCD码表示)
+  13          
+  14          
+  15          unsigned char Col_T[10];    //存储采集到的10个温度数据
+  16          unsigned char Show_state;   //界面显示（0-参数设置界面  1-时钟显示界面）
+  17          unsigned char Interval=1;   //采集时间间隔（1s、5s、30s、60s）
+  18          unsigned char Col_Interval;   //确认采集时间
+  19          unsigned char i;
+  20          unsigned char index;    //采集到的温度的索引值（0-9）
+  21          
+  22          
+  23          bit Col_flag;   //收集温度标志（每收集一次温度成功后清除）
+  24          bit Remind_symbol;    //提示符号显示状态
+  25          bit Col_state;    //收集温度状态（1-开始收集  0-停止收集）
+  26          bit LED_state1;   //LED1状态（0-熄灭  1-点亮）
+  27          bit LED_state2;   //LED2状态（0-熄灭  1-点亮）
+  28          
+  29          void Iniy_Sys(void)
+  30          {
+  31   1        LED_Close(0XFF);    //LED都不点亮
+  32   1        BUZZER_Close();   //蜂鸣器不响
+  33   1        RELAY_Close();    //继电器不吸合
+  34   1        Nixie_NoDisplay();    //数码管不亮
+  35   1        P2&=0X1F;//锁存
+  36   1      }
+  37          
+  38          void USE_DS18B20(void)
+  39          {
+  40   1        if(Col_flag==1)
+  41   1        {
+  42   2          DS18B20_ConvertT();
+  43   2          Col_T[i]=DS18B20_ReadT();
+  44   2          i++;
+  45   2          Col_flag=0;
+  46   2        }
+  47   1      }
+  48          
+  49          void USE_KEY(void)
+  50          {
+  51   1        KEY_Press();
+  52   1        
+  53   1        if(KeyNum==1)   //S4按下
+  54   1        {
+C51 COMPILER V9.59.0.0   MAIN                                                              03/04/2023 20:28:42 PAGE 2   
+
+  55   2          KeyNum=0;
+  56   2          if(Show_state==0)
+  57   2          {
+  58   3            if(Interval==1){Interval=5;}
+  59   3            else if(Interval==5){Interval=30;}
+  60   3            else if(Interval==30){Interval=60;}
+  61   3            else if(Interval==60){Interval=1;}
+  62   3          }
+  63   2        }
+  64   1        if(KeyNum==2)   //S5按下
+  65   1        {
+  66   2          if(Show_state==0)
+  67   2          {
+  68   3            Show_state=1;   //进入时钟显示界面
+  69   3            Col_state=1;    //开始收集温度
+  70   3            KeyNum=0;
+  71   3          }
+  72   2        }
+  73   1        if(KeyNum==3)   //S6按下
+  74   1        {
+  75   2          if(Show_state==2)
+  76   2          {
+  77   3            LED_state1=0;
+  78   3            index++;
+  79   3            if(index>9){index=0;}
+  80   3          }
+  81   2          KeyNum=0;
+  82   2        }
+  83   1        if(KeyNum==4)   //S7按下
+  84   1        {
+  85   2          Show_state=0;   //进入参数设置页面
+  86   2          Interval=1;   //恢复为默认采集时间间隔
+  87   2          KeyNum=0;
+  88   2        }
+  89   1      }
+  90          
+  91          void USE_SMG(void)
+  92          {
+  93   1        if(Show_state==0)   //参数设置界面
+  94   1        {
+  95   2          Nixie_Display(5,0XBF);
+  96   2          Nixie_Display(6,Donot_SMG[Interval/10]);
+  97   2          Nixie_Display(7,Donot_SMG[Interval%10]);
+  98   2        }
+  99   1        else if(Show_state==1)    //时钟显示界面
+ 100   1        {
+ 101   2          Nixie_Display(0,Donot_SMG[Time[2]/16]);   //除以16是因为是BCD码
+ 102   2          Nixie_Display(1,Donot_SMG[Time[2]%16]);
+ 103   2          Nixie_Display(3,Donot_SMG[Time[1]/16]);
+ 104   2          Nixie_Display(4,Donot_SMG[Time[1]%16]);
+ 105   2          Nixie_Display(6,Donot_SMG[Time[0]/16]);
+ 106   2          Nixie_Display(7,Donot_SMG[Time[0]%16]);
+ 107   2          if(Remind_symbol==0)
+ 108   2          {
+ 109   3            Nixie_Display(2,0XBF);
+ 110   3            Nixie_Display(5,0XBF);
+ 111   3          }
+ 112   2          else
+ 113   2          {
+ 114   3            Nixie_Display(2,0XFF);
+ 115   3            Nixie_Display(5,0XFF);
+ 116   3          }
+C51 COMPILER V9.59.0.0   MAIN                                                              03/04/2023 20:28:42 PAGE 3   
+
+ 117   2        }
+ 118   1        else if(Show_state==2)    //温度采集显示界面
+ 119   1        {
+ 120   2          Nixie_Display(0,0XBF);
+ 121   2          Nixie_Display(1,Donot_SMG[index/10]);   
+ 122   2          Nixie_Display(2,Donot_SMG[index%10]);
+ 123   2          
+ 124   2          Nixie_Display(5,0XBF);
+ 125   2          Nixie_Display(6,Donot_SMG[Col_T[index]/10]);    //显示采集的温度数据
+ 126   2          Nixie_Display(7,Donot_SMG[Col_T[index]%10]);
+ 127   2        }
+ 128   1        
+ 129   1        Nixie_ALL();
+ 130   1      }
+ 131          
+ 132          void USE_LED(void)
+ 133          {
+ 134   1        if(LED_state2==1&&LED_state1==1)
+ 135   1        {
+ 136   2          LED_Open(0X01);
+ 137   2        }
+ 138   1        else
+ 139   1        {
+ 140   2          LED_Close(0X01);
+ 141   2        }
+ 142   1        
+ 143   1      }
+ 144          
+ 145          /*10ms的中断函数*/
+ 146          void Timer0_Routine(void) interrupt 1
+ 147          {
+ 148   1        static unsigned char count;
+ 149   1        static unsigned int count1;
+ 150   1        if(Show_state==1)
+ 151   1        {
+ 152   2          count++;
+ 153   2          if(count==100)    //达到1s
+ 154   2          {
+ 155   3            Remind_symbol=~Remind_symbol;
+ 156   3            count=0;
+ 157   3          }
+ 158   2        }
+ 159   1      
+ 160   1        if(Col_flag==0)   //防止一次温度数据没有采集完开始了第二次采集
+ 161   1        {
+ 162   2          if(Col_state==1)
+ 163   2          {
+ 164   3            count1++;
+ 165   3            if(count1==(Interval*100))    //达到收集1次温度的时间
+ 166   3            {
+ 167   4              if(Col_Interval==Interval*10)
+ 168   4              {
+ 169   5                Col_state=0;    //停止收集
+ 170   5                Col_Interval=0;   //收集间隔时间清零
+ 171   5                i=0;    //自增变量清除
+ 172   5                Show_state=2;   //收集完温度进入温度采集显示界面
+ 173   5                LED_state1=1;
+ 174   5              }
+ 175   4              count1=0;
+ 176   4              Col_flag=1;//收集温度标志
+ 177   4              Col_Interval+=Interval;
+ 178   4            }
+C51 COMPILER V9.59.0.0   MAIN                                                              03/04/2023 20:28:42 PAGE 4   
+
+ 179   3          }
+ 180   2        }
+ 181   1      
+ 182   1        if(LED_state1==1)
+ 183   1        {
+ 184   2          LED_state2=~LED_state2;
+ 185   2        }
+ 186   1      }
+ 187          
+ 188          void main(void)
+ 189          {
+ 190   1        Iniy_Sys();
+ 191   1        Timer0Init();
+ 192   1        Write_time(Time);
+ 193   1        DS18B20_ConvertT();//上电第一次先转换一次数据，防止一上电数码管不能立马显示正常的温度数据
+ 194   1        Delay1000ms();//等待温度转换完成再上电显示
+ 195   1        while(1)
+ 196   1        {
+ 197   2          Read_time(Time);
+ 198   2          USE_KEY();
+ 199   2          USE_DS18B20();
+ 200   2          USE_SMG();
+ 201   2          USE_LED();
+ 202   2        }
+ 203   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    615    ----
+   CONSTANT SIZE    =     20    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     21    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      5    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

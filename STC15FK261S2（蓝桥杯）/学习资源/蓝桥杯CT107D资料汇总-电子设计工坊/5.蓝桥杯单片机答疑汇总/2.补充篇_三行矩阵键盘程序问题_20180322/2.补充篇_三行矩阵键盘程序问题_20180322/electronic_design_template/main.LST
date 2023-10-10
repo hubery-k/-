@@ -1,0 +1,157 @@
+C51 COMPILER V9.56.0.0   MAIN                                                              03/22/2018 19:02:58 PAGE 1   
+
+
+C51 COMPILER V9.56.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          /*
+   2           * 简介：三行按键-矩阵键盘
+   3           * Copyright (c) 2017 电子设计工坊 dianshe.taobao.com
+   4           * All rights reserved
+   5           */
+   6          #include "STC15F2K60S2.h"
+   7          
+   8          sbit buzzer = P0^4;
+   9          sbit relay = P0^6;
+  10          
+  11          #define  u8             unsigned char
+  12          #define  u16    unsigned int
+  13          
+  14          u8 code smg_du[]={0x3F,0x06,0x5B,0x4F,0x66,0x6D,0x7D,0x07,0x7F,0x6F,0x00}; //0-9 
+  15          u8 code smg_wei[]={0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+  16          
+  17          #define SetKeyBoard(x) P4 = (x>>3) | (x>>4);P3 = x 
+  18          #define GetKeyBoard() ((P4&0x10)<<3) | ((P4&0x04)<<4) | (P3&0x3F)
+  19          unsigned char Trg; 
+  20          unsigned char Cont; 
+  21          
+  22          /**
+  23            * @brief  三行按键-矩阵键盘，提供简化版本，大家自行消化理解
+  24            * @param  None
+  25            * @retval None
+  26            * @author dianshe.taobao.com
+  27            */
+  28          void KeyRead( void ) 
+  29          { 
+  30   1          unsigned char ReadData; 
+  31   1          SetKeyBoard(0x0f);
+  32   1          ReadData=GetKeyBoard(); 
+  33   1              SetKeyBoard(0xf0);
+  34   1          ReadData=(ReadData | GetKeyBoard())^0xff; 
+  35   1          Trg  = ReadData & (ReadData ^ Cont); 
+  36   1          Cont = ReadData; 
+  37   1      } 
+  38          
+  39          /**
+  40            * @brief  按键处理函数
+  41            * @param  None
+  42            * @retval None
+  43            * @author dianshe.taobao.com
+  44            */
+  45          void KeyProc(void) 
+  46          { 
+  47   1          if (Trg)  // 如果有按下 
+  48   1          {
+  49   2                      P2=0x80;P0=Trg^0xff;;P2=0x00;   
+  50   2          }
+  51   1              
+  52   1              if (Trg==0x81)//S7
+  53   1              {
+  54   2                      P2=0xa0;relay=0;buzzer=0;P2=0x00;
+  55   2              }
+C51 COMPILER V9.56.0.0   MAIN                                                              03/22/2018 19:02:58 PAGE 2   
+
+  56   1              if (Trg==0x82)//S6
+  57   1              {
+  58   2                      P2=0xa0;relay=1;buzzer=0;P2=0x00;
+  59   2              }
+  60   1              if (Trg==0x84)//S5
+  61   1              {
+  62   2                      P2=0xa0;relay=0;buzzer=1;P2=0x00;
+  63   2              }
+  64   1              if (Trg==0x88)//S4
+  65   1              {
+  66   2                      P2=0xa0;relay=1;buzzer=1;P2=0x00;
+  67   2              }
+  68   1              
+  69   1          if (Cont)  // 如果按键被按着不放 
+  70   1          { 
+  71   2                 
+  72   2          }
+  73   1              
+  74   1          if (Trg ==0 & Cont==0)  //按键放开  
+  75   1          { 
+  76   2             
+  77   2          } 
+  78   1      } 
+  79          
+  80          void Timer0_Init(void)
+  81          {
+  82   1              AUXR |= 0x80;   
+  83   1              TMOD &= 0xF0;
+  84   1              TL0 = 0xCD;             
+  85   1              TH0 = 0xD4;             
+  86   1              TF0 = 0;                
+  87   1              TR0 = 1;                
+  88   1              ET0 = 1;
+  89   1              EA=1; 
+  90   1      }
+  91          
+  92          bit key_flag;
+  93          void main() 
+  94          { 
+  95   1              P2=0x80;P0=0x00;P2=0x00;
+  96   1              P2=0xa0;P0=0x00;P2=0x00;
+  97   1          Trg=0; 
+  98   1          Cont=0;
+  99   1              Timer0_Init();                                  /*timer0 1ms interrupt*/
+ 100   1          while(1) 
+ 101   1          { 
+ 102   2                      if(key_flag)
+ 103   2                      {
+ 104   3                              key_flag=0;
+ 105   3                              KeyRead(); 
+ 106   3                              KeyProc(); 
+ 107   3                      }
+ 108   2          } 
+ 109   1      }
+ 110          
+ 111          void Timer0_Interrupt() interrupt 1  using 1                   
+ 112          {
+ 113   1              static int key_count=0,smg_count=0,i=0;
+ 114   1              key_count++;smg_count++;
+ 115   1              if(key_count==10)                               /*10ms interrupt*/
+ 116   1              {
+ 117   2                      key_count=0;
+C51 COMPILER V9.56.0.0   MAIN                                                              03/22/2018 19:02:58 PAGE 3   
+
+ 118   2                      key_flag=1;
+ 119   2              }
+ 120   1      
+ 121   1              if(smg_count==3)                                /*3ms interrupt*/
+ 122   1              {
+ 123   2                      smg_count=0;
+ 124   2                      P2=0xc0;P0=0;P2=0;                      
+ 125   2                      P2=0xe0;P0=~smg_du[i];P2=0;
+ 126   2                      P2=0xc0;P0=smg_wei[i];P2=0;
+ 127   2                      i++;
+ 128   2                      if(i==8) i=0;
+ 129   2              }
+ 130   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    333    ----
+   CONSTANT SIZE    =     19    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      8    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,150 @@
+C51 COMPILER V9.02   EX18                                                                  11/19/2012 14:12:12 PAGE 1   
+
+
+C51 COMPILER V9.02, COMPILATION OF MODULE EX18
+OBJECT MODULE PLACED IN ex18.OBJ
+COMPILER INVOKED BY: D:\keil\C51\BIN\C51.EXE ex18.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          /*******************************************************************************  
+   2          * 文件名称：超声波测距实验
+   3          * 实验目的：1.掌握超声波测距原理
+   4          *           2.掌握51单片机定时器工作模式和配置方法
+   5          * 程序说明：无
+   6          * 日期版本：2012-9-6/V1.0a 
+   7          *******************************************************************************/
+   8          
+   9          #include "reg52.h"  //定义51单片机特殊功能寄存器
+  10          #include "intrins.h"
+  11          #include "absacc.h"
+  12          
+  13          #define somenop {_nop_();_nop_();_nop_();_nop_();_nop_();\
+  14                           _nop_();_nop_();_nop_();_nop_(); _nop_();}
+  15          sbit TX = P1^0;  //发射引脚
+  16          sbit RX = P1^1;  //接收引脚
+  17          
+  18          code unsigned char tab[] = { 0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,\
+  19                                       0xff};
+  20          unsigned char dspbuf[8] = {10,10,10,10,10,10,10,10};  //显示缓冲区
+  21          unsigned char dspcom = 0;
+  22          
+  23          unsigned int intr = 0;
+  24          bit s_flag;
+  25          unsigned int t = 0;
+  26          
+  27          void send_wave(void);
+  28          void display(void);
+  29          
+  30          void main(void)
+  31          {
+  32   1          unsigned int distance;
+  33   1      
+  34   1          TMOD |= 0x11;  //配置定时器工作模式
+  35   1          TH0 = (65536-2000)/256;
+  36   1          TL0 = (65536-2000)%256;  
+  37   1          TH1 = 0;
+  38   1          TL1 = 0;  
+  39   1        
+  40   1          EA = 1;
+  41   1          ET0 = 1;  //打开定时器0中断
+  42   1          TR0 = 1;  //启动定时器   
+  43   1      
+  44   1          while(1)
+  45   1          {
+  46   2              /** 200毫秒更新一次数据 */
+  47   2                      if(s_flag)
+  48   2              {
+  49   3                  s_flag = 0;
+  50   3                  /** 关闭定时器0中断:计算超声波发送到返回的时间 */
+  51   3      //                      ET0 = 0;
+  52   3                  send_wave();  //发送方波信号
+  53   3                  TR1 = 1;  //启动计时
+  54   3                              while((RX == 1) && (TF1 == 0));  //等待收到脉冲
+  55   3                              TR1 = 0;  //关闭计时
+C51 COMPILER V9.02   EX18                                                                  11/19/2012 14:12:12 PAGE 2   
+
+  56   3      
+  57   3                              //发生溢出
+  58   3                              if(TF1 == 1)
+  59   3                              {
+  60   4                                      TF1 = 0;
+  61   4                                      distance = 9999;  //无返回
+  62   4                              }
+  63   3                              else
+  64   3                              {
+  65   4                                      /**  计算时间  */
+  66   4                                      t = TH1;
+  67   4                                      t <<= 8;
+  68   4                                      t |= TL1;
+  69   4                                      distance = (unsigned int)(t*0.017);  //计算距离                         
+  70   4                              }
+  71   3                              TH1 = 0;
+  72   3                              TL1 = 0;
+  73   3              }
+  74   2                      /** 数据处理                      */
+  75   2                           
+  76   2                      dspbuf[5] = distance/100;
+  77   2                      dspbuf[6] = distance%100/10;
+  78   2                      dspbuf[7] = distance%10;        
+  79   2          }
+  80   1      }
+  81          
+  82          //定时器0中断服务函数
+  83          void isr_timer_0(void)  interrupt 1  //默认中断优先级 1
+  84          {
+  85   1          TH0 = (65536-2000)/256;
+  86   1          TL0 = (65536-2000)%256;  //定时器重载 
+  87   1           
+  88   1              display();  //2ms执行一次
+  89   1      
+  90   1              if(++intr == 200)
+  91   1              {
+  92   2              s_flag = 1;
+  93   2              intr = 0;
+  94   2          }
+  95   1      }
+  96          
+  97          //显示函数  
+  98          void display(void)
+  99          {
+ 100   1              XBYTE[0xE000] = 0xff;  //去除鬼影
+ 101   1      
+ 102   1              XBYTE[0xC000] = (1<<dspcom);
+ 103   1              XBYTE[0xE000] = tab[dspbuf[dspcom]]; 
+ 104   1              
+ 105   1              if(++dspcom == 8){
+ 106   2                      dspcom = 0;
+ 107   2              }       
+ 108   1      }
+ 109          
+ 110          //TX引脚发送40KHz方波信号驱动超声波发送探头
+ 111          void send_wave(void)
+ 112          {
+ 113   1              unsigned char i = 8;  //发送8个脉冲
+ 114   1              
+ 115   1              do
+ 116   1              {
+ 117   2                      TX = 1;
+C51 COMPILER V9.02   EX18                                                                  11/19/2012 14:12:12 PAGE 3   
+
+ 118   2                      somenop;
+ 119   2                      TX = 0;
+ 120   2                      somenop;
+ 121   2              }
+ 122   1              while(i--);
+ 123   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    322    ----
+   CONSTANT SIZE    =     11    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     13       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

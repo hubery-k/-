@@ -1,0 +1,116 @@
+C51 COMPILER V9.59.0.0   UART                                                              03/27/2023 20:29:22 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE UART
+OBJECT MODULE PLACED IN .\Objects\UART.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE BSP\src\UART.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\BSP\inc;.\TOOL\inc) DEBUG 
+                    -OBJECTEXTEND PRINT(.\Listings\UART.lst) TABS(2) OBJECT(.\Objects\UART.obj)
+
+line level    source
+
+   1          #include "UART.h"
+   2          
+   3          
+   4            /*一般来说，单片机给发送上位机发送数据，上位机可以实时接收，但如果上位机给单片机发送数据
+   5            单片机此时正处于while循环中处理其他程序那么数据就接收不到了，所以接收数据需要串口中断
+   6            当然也可以利用查询方式在while循环中不断查询是否有数据发送过来，当然这比较浪费CPU资源。*/
+   7          
+   8          /******************串口1**********************/
+   9          /*串口1默认位置是P30和P31，可以通过PWS_1寄存器在P30、P31和P36、P37和P16、P17之间进行引脚切换。
+  10          蓝桥杯开发板上自带的CH340下载电路上连接的是P30和P31引脚，所以串口1配置完后可以直接与串口助手进行通信。*/
+  11          void UART_Init(void)    //9600bps@11.0592MHz
+  12          {
+  13   1        SCON = 0x50;    //8位数据,可变波特率(且开启了REN使能位)
+  14   1        AUXR &= 0xBF;   //定时器时钟12T模式
+  15   1        AUXR &= 0xFE;   //串口1选择定时器1为波特率发生器
+  16   1        TMOD &= 0x0F;   //设置定时器模式
+  17   1        TL1 = 0xE8;   //设置定时初始值
+  18   1        TH1 = 0xFF;   //设置定时初始值
+  19   1        ET1 = 0;    //禁止定时器%d中断
+  20   1        TR1 = 1;    //定时器1开始计时
+  21   1        
+  22   1        //清除中断标志位
+  23   1        RI=0;
+  24   1        //开中断
+  25   1        ES=1;
+  26   1        EA=1;
+  27   1      }
+  28          void UART_SendByte(unsigned char Byte)
+  29          {
+  30   1        SBUF=Byte;
+  31   1        while(TI==0);//等待数据发送完成TI由硬件置1
+  32   1        TI=0;//需要软件清零
+  33   1      }
+  34          
+  35          void UART_SendString(char *String)
+  36          {
+  37   1        unsigned char i;
+  38   1          for(i=0;String[i]!=0;i++)
+  39   1          { 
+  40   2            UART_SendByte(String[i]);
+  41   2          }
+  42   1      }
+  43          
+  44          //重定义putchar函数(为了使用printf函数)
+  45          char putchar(char ch)
+  46          {
+  47   1          SBUF = ch;
+  48   1          while(TI == 0);
+  49   1          TI = 0;
+  50   1          return ch;
+  51   1      }
+  52          
+  53          /******************串口2**********************/
+  54          /*由于蓝桥杯单片机上串口下载的位置是P30和P31该位置是串口1的默认位置，所以配置串口1可以通过串口助手进行通信
+C51 COMPILER V9.59.0.0   UART                                                              03/27/2023 20:29:22 PAGE 2   
+
+             -。
+  55          而串口2默认位置是P10和P11，通过P_SW2寄存器在P46、P47和P10、P11之间切换。
+  56          所以想要通过串口2通信需要另外连接CH340驱动芯片。*/
+  57          /*
+  58          void UART_Init(void)    //9600bps@11.0592MHz
+  59          {
+  60            S2CON = 0x50;   //8位数据,可变波特率
+  61            AUXR &= 0xFB;   //定时器时钟12T模式
+  62            T2L = 0xE8;   //设置定时初始值
+  63            T2H = 0xFF;   //设置定时初始值
+  64            AUXR |= 0x10;   //定时器2开始计时
+  65            
+  66            //清除中断标志位
+  67            S2CON&=~0X01;
+  68            //开中断
+  69            IE2|=0X01;//开启ES2;（IE2不可位寻址）
+  70            EA=1;
+  71          }
+  72          
+  73          void UART_SendByte(unsigned char Byte)
+  74          {
+  75            S2BUF=Byte;
+  76            while((S2CON&0X02)==0);//等待数据发送完成TI由硬件置1
+  77            S2CON&=~0X02;//需要软件清零
+  78          }
+  79          
+  80          void UART_Routine(void) interrupt 8
+  81          {
+  82            if(S2CON&0X01)
+  83            {
+  84              Data=S2BUF;
+  85              UART_SendByte(Data);
+  86              S2CON&=~0X01;
+  87            }
+  88          }
+  89          */
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     82    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       3
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

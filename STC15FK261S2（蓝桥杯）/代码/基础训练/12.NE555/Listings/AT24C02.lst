@@ -1,0 +1,59 @@
+C51 COMPILER V9.59.0.0   AT24C02                                                           12/31/2022 21:20:19 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE AT24C02
+OBJECT MODULE PLACED IN .\Objects\AT24C02.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE BSP\src\AT24C02.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\BSP\inc;.\TOOL\inc) DEB
+                    -UG OBJECTEXTEND PRINT(.\Listings\AT24C02.lst) TABS(2) OBJECT(.\Objects\AT24C02.obj)
+
+line level    source
+
+   1          #include "AT24C02.h"
+   2          #include "iic.h"
+   3          
+   4          #define AT24C02_ADDRESS  0XA0
+   5          //地址范围由于定义的是unsigned char型，所以在0~255都可以
+   6          void AT24C02_WriteByte(unsigned char Addr,Date)
+   7          {
+   8   1        IIC_Start();
+   9   1        IIC_SendByte(AT24C02_ADDRESS);
+  10   1        IIC_WaitAck();
+  11   1        IIC_SendByte(Addr);
+  12   1        IIC_WaitAck();
+  13   1        IIC_SendByte(Date);
+  14   1        IIC_WaitAck();
+  15   1        IIC_Stop();
+  16   1      }
+  17          
+  18          unsigned char AT24C02_ReadByte(unsigned char Addr)
+  19          {
+  20   1        unsigned char Data;
+  21   1        IIC_Start();
+  22   1        IIC_SendByte(AT24C02_ADDRESS);
+  23   1        IIC_WaitAck();
+  24   1        IIC_SendByte(Addr);
+  25   1        IIC_WaitAck();
+  26   1        
+  27   1        
+  28   1        IIC_Start();
+  29   1        IIC_SendByte(AT24C02_ADDRESS|0x01);
+  30   1        IIC_WaitAck();
+  31   1        Data=IIC_RecByte();
+  32   1        IIC_SendAck(1);
+  33   1        IIC_Stop();
+  34   1        return Data;
+  35   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     84    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       5
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

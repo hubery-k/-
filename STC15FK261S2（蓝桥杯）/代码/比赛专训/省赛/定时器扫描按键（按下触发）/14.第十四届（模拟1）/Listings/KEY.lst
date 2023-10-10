@@ -1,0 +1,65 @@
+C51 COMPILER V9.59.0.0   KEY                                                               04/02/2023 11:03:08 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\KEY.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE KEY.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\KEY.lst)
+                    - TABS(2) OBJECT(.\Objects\KEY.obj)
+
+line level    source
+
+   1          #include "KEY.h"
+   2          
+   3          #define set(x) P4=(x>>3)|(x>>4);P3=x
+   4          #define get() ((P4&0X04)<<4)|((P4&0X10)<<3)|(P3&0X3F)
+   5          
+   6          static uc KeyNum;
+   7          uc Trg,Cont;
+   8          void KEY_KBD()
+   9          {
+  10   1        uc Dat;
+  11   1        set(0x0F);
+  12   1        Dat=get();
+  13   1        set(0xF0);
+  14   1        Dat=(get()|Dat)^0XFF;
+  15   1        Trg=Dat&(Dat^Cont);
+  16   1        Cont=Dat;
+  17   1      }
+  18          
+  19          void KEY_Loop()
+  20          {
+  21   1        KEY_KBD();
+  22   1        AUXR &= ~0x10;    //关闭定时器2;
+  23   1        switch(Trg^0XFF)
+  24   1        {
+  25   2          case 0x77:KeyNum=4;break; //S4
+  26   2          case 0XB7:KeyNum=8;break; //S8
+  27   2          case 0XD7:KeyNum=12;break;  //S12
+  28   2          case 0XE7:KeyNum=16;break;  //S16
+  29   2          case 0XBB:KeyNum=9;break; //S9
+  30   2        }
+  31   1        AUXR |= 0x10;   //启动定时器2;
+  32   1        P3=0XFF;
+  33   1      }
+  34          
+  35          uc KEY()
+  36          {
+  37   1        uc Temp;
+  38   1        Temp=KeyNum;
+  39   1        KeyNum=0;
+  40   1        return Temp;
+  41   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    137    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

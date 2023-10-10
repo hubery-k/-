@@ -1,0 +1,17 @@
+<html>
+<body>
+<pre>
+<h1>礦ision Build Log</h1>
+<h2>Project:</h2>
+C:\Users\Kengcc\Desktop\蓝桥杯答疑汇总\4.第七届模拟题_温度记录器_温度记录问题_20180325\解决方案\wendu.uvproj
+Project File Date:  03/25/2018
+
+<h2>Output:</h2>
+Build target 'Target 1'
+compiling mainn.c...
+linking...
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?DELAY100MS?MAINN
+Program Size: data=79.5 xdata=0 code=2085
+creating hex file from "wendu"...
+"wendu" - 0 Error(s), 1 Warning(s).

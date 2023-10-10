@@ -1,0 +1,21 @@
+".\Objects\main.obj",
+".\Objects\LED.obj",
+".\Objects\BUZZER.obj",
+".\Objects\RELAY.obj",
+".\Objects\Nixie.obj",
+".\Objects\KEY.obj",
+".\Objects\INT.obj",
+".\Objects\Timer.obj",
+".\Objects\UART.obj",
+".\Objects\Ds1302_Clcok.obj",
+".\Objects\DS18B20.obj",
+".\Objects\AD.obj",
+".\Objects\AT24C02.obj",
+".\Objects\NE555.obj",
+".\Objects\Delay.obj",
+".\Objects\ds1302.obj",
+".\Objects\onewire.obj",
+".\Objects\iic.obj" 
+TO ".\Objects\Project" 
+PRINT(".\Listings\Project.m51") RAMSIZE(256) 
+DISABLEWARNING (16) 

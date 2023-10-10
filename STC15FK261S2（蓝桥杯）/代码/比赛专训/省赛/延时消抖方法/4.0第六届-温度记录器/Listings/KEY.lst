@@ -1,0 +1,40 @@
+C51 COMPILER V9.59.0.0   KEY                                                               03/02/2023 21:47:34 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\KEY.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE KEY.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\KEY.lst)
+                    - TABS(2) OBJECT(.\Objects\KEY.obj)
+
+line level    source
+
+   1          #include "KEY.h"
+   2          #include "Delay.h"
+   3          
+   4          /*Ê¹ÓÃ¶ÀÁ¢°´¼ü*/
+   5          unsigned char KeyNum;
+   6          void KEY_Press(void)
+   7          {
+   8   1        
+   9   1        if(KEY7==0){Delay20ms();while(KEY7==0);Delay20ms();KeyNum=4;}
+  10   1        if(KEY6==0){Delay20ms();while(KEY6==0);Delay20ms();KeyNum=3;}
+  11   1        if(KEY5==0){Delay20ms();while(KEY5==0);Delay20ms();KeyNum=2;}
+  12   1        if(KEY4==0){Delay20ms();while(KEY4==0);Delay20ms();KeyNum=1;}
+  13   1      }
+  14          /*¼Ç×¡ÔÚKeyº¯ÊýÖÐ²»ÄÜÀûÓÃreturnÀ´·µ»Ø¼üÖµ¡£ÀýÈç£¬µ±µÚÒ»´Î°´ÏÂKeyNum=1£¬ÄÇÃ´ÏÂ´Îµ÷ÓÃ¸Ãº¯ÊýÊ±¼´Ê¹Ã»ÓÐ°´¼ü°´Ï
+             -ÂÒÀÈ»»á·µ»Ø¼üÖµKeyNum=1
+  15            ÕâÀïÎÒÊ¹ÓÃÈ«¾Ö±äÁ¿·µ»Ø¼üÖµ*/
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     61    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      1    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

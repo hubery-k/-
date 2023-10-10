@@ -1,0 +1,4 @@
+".\output\STARTUP.obj",
+".\output\main.obj" 
+TO ".\output\7SEG" 
+PRINT(".\list\7SEG.m51") RAMSIZE(256) 

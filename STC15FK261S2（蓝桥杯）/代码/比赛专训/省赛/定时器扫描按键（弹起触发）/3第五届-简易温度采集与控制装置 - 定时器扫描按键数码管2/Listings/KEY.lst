@@ -1,0 +1,95 @@
+C51 COMPILER V9.59.0.0   KEY                                                               03/17/2023 12:28:15 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\KEY.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE KEY.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\KEY.lst)
+                    - TABS(2) OBJECT(.\Objects\KEY.obj)
+
+line level    source
+
+   1          #include "KEY.h"
+   2          #include "Delay.h"
+   3          
+   4          static unsigned char KeyNum;
+   5          
+   6          
+   7          unsigned char Key_GetState()
+   8          {
+   9   1        unsigned char Num=0;
+  10   1        
+  11   1        P3|=0X3F;//为了方便判断按键按下先都给赋成1。
+  12   1        P4|=0X14;
+  13   1        P30=0;
+  14   1        if(P44==0){Num=1;}
+  15   1        if(P42==0){Num=2;}
+  16   1        if(P35==0){Num=3;}
+  17   1      
+  18   1        P3|=0X3F;
+  19   1        P4|=0X14;
+  20   1        P31=0;
+  21   1        if(P44==0){Num=4;}
+  22   1        if(P42==0){Num=5;}
+  23   1        if(P35==0){Num=6;}
+  24   1      
+  25   1        P3|=0X3F;
+  26   1        P4|=0X14;
+  27   1        P32=0;
+  28   1        if(P44==0){Num=7;}
+  29   1        if(P42==0){Num=8;}
+  30   1        if(P35==0){Num=9;}
+  31   1      
+  32   1        P3|=0X3F;
+  33   1        P4|=0X14;
+  34   1        P33=0;
+  35   1        if(P44==0){Num=10;}
+  36   1        if(P42==0){Num=11;}//设置按键
+  37   1        if(P35==0){Num=12;}//清除按键
+  38   1      
+  39   1        return Num;
+  40   1      }
+  41          
+  42          void Key_Loop(void)
+  43          {
+  44   1        static unsigned char N_State,L_State;
+  45   1        L_State=N_State;
+  46   1        N_State=Key_GetState();
+  47   1        if(L_State==1&& N_State==0){KeyNum=1;}
+  48   1        if(L_State==2&& N_State==0){KeyNum=2;}
+  49   1        if(L_State==3&& N_State==0){KeyNum=3;}
+  50   1        if(L_State==4&& N_State==0){KeyNum=4;}
+  51   1        if(L_State==5&& N_State==0){KeyNum=5;}
+  52   1        if(L_State==6&& N_State==0){KeyNum=6;}
+  53   1        if(L_State==7&& N_State==0){KeyNum=7;}
+  54   1        if(L_State==8&& N_State==0){KeyNum=8;}
+C51 COMPILER V9.59.0.0   KEY                                                               03/17/2023 12:28:15 PAGE 2   
+
+  55   1        if(L_State==9&& N_State==0){KeyNum=9;}
+  56   1        if(L_State==10&& N_State==0){KeyNum=10;}
+  57   1        if(L_State==11&& N_State==0){KeyNum=11;}
+  58   1        if(L_State==12&& N_State==0){KeyNum=12;}
+  59   1      }
+  60          
+  61          unsigned char MatrixKey(void)
+  62          {
+  63   1        unsigned char Temp=0;
+  64   1        Temp=KeyNum;
+  65   1        KeyNum=0;   //每一次调用结束后清除按键状态
+  66   1        return Temp;
+  67   1      }
+  68          
+  69          /*三行的矩阵按键在后台中会有些问题所以不适用*/
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    277    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

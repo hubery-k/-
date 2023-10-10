@@ -1,0 +1,298 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              03/19/2023 12:29:33 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.ls
+                    -t) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "LED.h"
+   2          #include "RB.h"
+   3          #include "Nixie.h"
+   4          #include "Timer.h"
+   5          #include "KEY.h"
+   6          #include "DS18B20.h"
+   7          #include "Delay.h"
+   8          #include "Clock.h"
+   9          
+  10          uc code Nodot_SMG[]={~0x3F,~0x06,~0x5B,~0x4F,~0x66,~0x6D,~0x7D,~0x07,~0x7F,~0x6F,~0x77,~0x7C,~0x39,~0x5E,~
+             -0x79,~0x71};
+  11          uc code dot_SMG[]={~0xBF,~0x86,~0xDB,~0xCF,~0xE6,~0xED,~0xFD,~0x87,~0xFF,~0xEF,~0xF7,~0xFC,~0xB9,~0xDE,~0x
+             -F9,~0xF1};
+  12          uc Time[3]={0X50,0X59,0X23};  //23时59分30秒
+  13          
+  14          
+  15          uc KeyNum;
+  16          f T;
+  17          uc T_Int; //温度整数
+  18          uc T_De;  //温度小数（小数点后一位）
+  19          uc T_parameter=23;    //温度参数（范围：10~99）
+  20          uc Serial_Num=1;    //编号
+  21          uc Interface;   //显示界面
+  22          uc Count;
+  23          
+  24          bit T_flag;   //温度采集标志
+  25          bit C_flag;   //时间采集标志
+  26          bit Mode;
+  27          bit L3_flag;
+  28          bit L1_State;
+  29          bit L2_State;
+  30          bit L3_State;
+  31          bit RB_flag;
+  32          bit RB_State;
+  33          
+  34          
+  35          void Sys_Init()
+  36          {
+  37   1        LED_Control(0X00);
+  38   1        RB_Control(0X00);
+  39   1      }
+  40          
+  41          void USE_DS18B20()
+  42          {
+  43   1        if(T_flag==1)
+  44   1        {
+  45   2          T_flag=0;
+  46   2          DS18B20_ConvertT();
+  47   2          T=DS18B20_ReadT();
+  48   2        }
+  49   1        T_Int=T;
+  50   1        T_De=(uc)(T*10)%10;
+  51   1        
+  52   1        
+C51 COMPILER V9.59.0.0   MAIN                                                              03/19/2023 12:29:33 PAGE 2   
+
+  53   1        if(Mode==0)   //温度控制模式下
+  54   1        {
+  55   2          L2_State=1;
+  56   2          if(T>(f)T_parameter){RB_State=1;}//开继电器
+  57   2          else{RB_State=0;}   //关继电器
+  58   2        }
+  59   1        
+  60   1      }
+  61          
+  62          void USE_DS1302()
+  63          {
+  64   1        if(C_flag==1)
+  65   1        {
+  66   2          C_flag=0;
+  67   2          Read_Time(Time);
+  68   2        }
+  69   1        
+  70   1        if(Mode==1)   //时间模式下
+  71   1        {
+  72   2          L2_State=0;
+  73   2          
+  74   2          if(Time[0]==0X00 && Time[1]==0X00)  //达到整点
+  75   2          {
+  76   3            RB_State=1;   //开继电器
+  77   3            L1_State=1;   //开L1
+  78   3          }
+  79   2        }
+  80   1      }
+  81          
+  82          void USE_LED()
+  83          {
+  84   1        LED_Init();
+  85   1        
+  86   1        if(L1_State==1){L1=0;}
+  87   1        else if(L1_State==0){L1=1;}
+  88   1        
+  89   1        if(L2_State==1){L2=0;}    //温度控制模式下亮
+  90   1        else if(L2_State==0){L2=1;}
+  91   1        
+  92   1        if(L3_State==1){L3=0;}
+  93   1        else if(L3_State==0){L3=1;}
+  94   1        
+  95   1        P2&=0X1F;
+  96   1      }
+  97          
+  98          void USE_RB()
+  99          {
+ 100   1        RB_Init();
+ 101   1        if(RB_State==1){Relay=1;;RB_flag=1;}
+ 102   1        else if(RB_State==0){Relay=0;RB_flag=0;}
+ 103   1        
+ 104   1        
+ 105   1        if(RB_flag==1){L3_flag=1;}
+ 106   1        else{L3_flag=0;L3_State=0;}
+ 107   1        
+ 108   1        P2&=0X1F;
+ 109   1      }
+ 110          
+ 111          void USE_KEY()
+ 112          {
+ 113   1        KeyNum=Key_Matrix();
+ 114   1        if(KeyNum==12)    //S12-界面切换
+C51 COMPILER V9.59.0.0   MAIN                                                              03/19/2023 12:29:33 PAGE 3   
+
+ 115   1        {
+ 116   2          Interface++;
+ 117   2          if(Interface==3){Interface=0;}
+ 118   2          
+ 119   2          if(Interface==0){Serial_Num=1;}
+ 120   2          if(Interface==1){Serial_Num=2;}
+ 121   2          if(Interface==2){Serial_Num=3;}
+ 122   2        }
+ 123   1        
+ 124   1        if(KeyNum==13)    //S13-模式切换
+ 125   1        {
+ 126   2          Mode=~Mode;
+ 127   2        }
+ 128   1        
+ 129   1        if(Interface==2)    //参数设置界面下
+ 130   1        {
+ 131   2          if(KeyNum==16)    //S16-加（温度参数）
+ 132   2          {
+ 133   3            T_parameter+=1;
+ 134   3            if(T_parameter>99){T_parameter=10;}
+ 135   3          }
+ 136   2          if(KeyNum==17)    //S17-减（温度参数）
+ 137   2          {
+ 138   3            T_parameter-=1;
+ 139   3            if(T_parameter<10){T_parameter=99;}
+ 140   3          }
+ 141   2        }
+ 142   1        /*由于目前使用的是松开按键触发，故这里使用暂时无法表示*/
+ 143   1      }
+ 144          
+ 145          void USE_SMG()
+ 146          {
+ 147   1        if(Interface==0)
+ 148   1        {
+ 149   2          Nixie_SetBuf(0,0XC1);
+ 150   2          Nixie_SetBuf(1,Nodot_SMG[Serial_Num]);
+ 151   2          Nixie_SetBuf(2,0XFF);
+ 152   2          Nixie_SetBuf(3,0XFF);
+ 153   2          Nixie_SetBuf(4,0XFF);
+ 154   2          Nixie_SetBuf(5,Nodot_SMG[T_Int/10]);
+ 155   2          Nixie_SetBuf(6,dot_SMG[T_Int%10]);
+ 156   2          Nixie_SetBuf(7,Nodot_SMG[T_De]);
+ 157   2      
+ 158   2        }
+ 159   1        else if(Interface==1)
+ 160   1        {
+ 161   2          Nixie_SetBuf(0,0XC1);
+ 162   2          Nixie_SetBuf(1,Nodot_SMG[Serial_Num]);
+ 163   2          Nixie_SetBuf(2,0XFF);
+ 164   2          Nixie_SetBuf(3,Nodot_SMG[Time[2]/16]);
+ 165   2          Nixie_SetBuf(4,Nodot_SMG[Time[2]%16]);
+ 166   2          Nixie_SetBuf(5,0XBF);   //间隔符
+ 167   2          Nixie_SetBuf(6,Nodot_SMG[Time[1]/16]);
+ 168   2          Nixie_SetBuf(7,Nodot_SMG[Time[1]%16]);
+ 169   2        }
+ 170   1        else if(Interface==2)
+ 171   1        {
+ 172   2          Nixie_SetBuf(0,0XC1);
+ 173   2          Nixie_SetBuf(1,Nodot_SMG[Serial_Num]);
+ 174   2          Nixie_SetBuf(2,0XFF);
+ 175   2          Nixie_SetBuf(3,0XFF);
+ 176   2          Nixie_SetBuf(4,0XFF);
+C51 COMPILER V9.59.0.0   MAIN                                                              03/19/2023 12:29:33 PAGE 4   
+
+ 177   2          Nixie_SetBuf(5,0XFF);
+ 178   2          Nixie_SetBuf(6,Nodot_SMG[T_parameter/10]);
+ 179   2          Nixie_SetBuf(7,Nodot_SMG[T_parameter%10]);
+ 180   2        }
+ 181   1      }
+ 182          void Timer0_Routine(void) interrupt 1
+ 183          {
+ 184   1        static uc T0_Count1;
+ 185   1        static uc T0_Count2;
+ 186   1        static uc T_Count;
+ 187   1        static uc C_Count;
+ 188   1        
+ 189   1        T0_Count1++;T0_Count2++;
+ 190   1        if(T0_Count1==2)
+ 191   1        {
+ 192   2          T0_Count1=0;
+ 193   2          Nixie_Loop();
+ 194   2        }
+ 195   1        if(T0_Count2==20)
+ 196   1        {
+ 197   2          T0_Count2=0;
+ 198   2          KEY_Loop();
+ 199   2        }
+ 200   1        
+ 201   1        T_Count++;
+ 202   1        if(T_Count==100)
+ 203   1        {
+ 204   2          T_Count=0;
+ 205   2          T_flag=1;
+ 206   2        }
+ 207   1        
+ 208   1        C_Count++;
+ 209   1        if(C_Count==50)
+ 210   1        {
+ 211   2          C_Count=0;
+ 212   2          C_flag=1;
+ 213   2        }
+ 214   1      }
+ 215          
+ 216          /*1ms的定时中断函数*/
+ 217          void Timer1_Routine() interrupt 3
+ 218          {
+ 219   1        static ui T1_Count1;
+ 220   1        static ui T1_Count2;
+ 221   1        if(L1_State==1&&RB_State==1)
+ 222   1        {
+ 223   2          T1_Count1++;
+ 224   2          if(T1_Count1>5000)    //达到5s
+ 225   2          {
+ 226   3            T1_Count1=0;
+ 227   3            L1_State=0;
+ 228   3            RB_State=0;
+ 229   3          }   
+ 230   2        }
+ 231   1        
+ 232   1        if(L3_flag==1)
+ 233   1        {
+ 234   2          T1_Count2++;
+ 235   2          if(T1_Count2==100)    //达到0.1s
+ 236   2          {
+ 237   3            T1_Count2=0;
+ 238   3            L3_State=~L3_State;
+C51 COMPILER V9.59.0.0   MAIN                                                              03/19/2023 12:29:33 PAGE 5   
+
+ 239   3          }
+ 240   2        }
+ 241   1      }
+ 242          
+ 243          void main()
+ 244          {
+ 245   1        Sys_Init();
+ 246   1        Timer0Init();
+ 247   1        Timer1Init();
+ 248   1        Write_Time(Time);
+ 249   1        DS18B20_ConvertT();
+ 250   1        Delay750ms();
+ 251   1        while(1)
+ 252   1        {
+ 253   2          EA=0;
+ 254   2          USE_LED();
+ 255   2          USE_RB();
+ 256   2          EA=1;
+ 257   2          USE_DS1302();
+ 258   2          USE_DS18B20();
+ 259   2          USE_KEY();
+ 260   2          USE_SMG();
+ 261   2        }
+ 262   1      }
+ 263          
+ 264          /*偶尔出现的问题：在温度控制模式下继电器有时候会间断自吸合断开（不是由于LED的影响）*/
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    838    ----
+   CONSTANT SIZE    =     32    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     22    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      9    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

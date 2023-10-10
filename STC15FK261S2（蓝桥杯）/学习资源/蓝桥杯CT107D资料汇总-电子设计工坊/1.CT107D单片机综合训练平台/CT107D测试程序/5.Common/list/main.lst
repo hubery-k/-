@@ -1,0 +1,54 @@
+C51 COMPILER V9.02   MAIN                                                                  01/01/2006 01:32:29 PAGE 1   
+
+
+C51 COMPILER V9.02, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\output\main.obj
+COMPILER INVOKED BY: D:\Keil\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND PRINT(.\list\main.lst) OBJECT(.\output\mai
+                    -n.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          
+   3          sbit buzzer = P0^6;
+   4          sbit relay = P0^4;
+   5          
+   6          void main(void)
+   7          {
+   8   1              
+   9   1              //关闭蜂鸣器
+  10   1              buzzer = 0;                 //高有效
+  11   1              P2 = 0xA0;
+  12   1              P2 = 0x00;
+  13   1      
+  14   1              //关闭继电器
+  15   1              relay = 0;              //高有效
+  16   1              P2 = 0xA0;
+  17   1              P2 = 0x00;
+  18   1      
+  19   1              //关闭数码管显示
+  20   1              P0 = 0x00;              //位选置低
+  21   1              P2 = 0xC0;
+  22   1              P2 = 0x00;
+  23   1      
+  24   1              //关闭发光二极管显示
+  25   1              P0 = 0xFF;              //低有效
+  26   1              P2 = 0x80;
+  27   1              P2 = 0x00;
+  28   1                      
+  29   1              while(1);
+  30   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     32    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

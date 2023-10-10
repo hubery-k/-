@@ -1,0 +1,49 @@
+C51 COMPILER V9.59.0.0   PCF8591                                                           03/30/2023 19:45:31 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE PCF8591
+OBJECT MODULE PLACED IN .\Objects\PCF8591.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE PCF8591.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\PCF8
+                    -591.lst) TABS(2) OBJECT(.\Objects\PCF8591.obj)
+
+line level    source
+
+   1          #include "PCF8591.h"
+   2          
+   3          #define PCF8591_ADDRESS 0X90
+   4          #define AD_AIN1 0X01  //光敏
+   5          #define AD_AIN3 0X03  //RB2
+   6          
+   7          uc AD_Read()
+   8          {
+   9   1        uc Dat;
+  10   1        I2CStart();
+  11   1        I2CSendByte(PCF8591_ADDRESS);
+  12   1        I2CWaitAck();
+  13   1        I2CSendByte(AD_AIN3);
+  14   1        I2CWaitAck();
+  15   1        I2CStop();
+  16   1        
+  17   1        I2CStart();
+  18   1        I2CSendByte(PCF8591_ADDRESS|0X01);
+  19   1        I2CWaitAck();
+  20   1        Dat=I2CReceiveByte();
+  21   1        I2CSendAck(1);    //主机发送非应答表示结束
+  22   1        I2CStop();
+  23   1        
+  24   1        return Dat;
+  25   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     49    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

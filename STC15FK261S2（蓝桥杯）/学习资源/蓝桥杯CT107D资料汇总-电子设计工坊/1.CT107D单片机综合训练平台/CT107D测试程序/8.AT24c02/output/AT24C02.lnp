@@ -1,0 +1,5 @@
+".\output\STARTUP.obj",
+".\output\main.obj",
+".\output\24c02.obj" 
+TO ".\output\AT24C02" 
+PRINT(".\list\AT24C02.m51") RAMSIZE(256) 

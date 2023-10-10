@@ -1,0 +1,59 @@
+C51 COMPILER V9.59.0.0   TIMER                                                             12/25/2022 23:52:08 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE TIMER
+OBJECT MODULE PLACED IN .\Objects\Timer.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE BSP\src\Timer.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\BSP\inc;.\TOOL\inc) DEBUG
+                    - OBJECTEXTEND PRINT(.\Listings\Timer.lst) TABS(2) OBJECT(.\Objects\Timer.obj)
+
+line level    source
+
+   1          #include "Timer.h"
+   2          
+   3          /*
+   4          //自己写的
+   5          void Timer0_Init(void)
+   6          {
+   7            TMOD=(TMOD&0XF0)|0X01;//高四位保持不变，低四位赋值为0001
+   8            TH0=(65535-64535)/256;
+   9            TL0(65535-64535)%256;
+  10            TF0=0;//清除中断标志
+  11            ET0=1;
+  12            EA=1;
+  13            PT0=1;//当只有一个中断的时候优先级可以不配置
+  14            TR0=1;//定时器0开始工作
+  15          }*/
+  16          
+  17          //STC-SIP生成的
+  18          void Timer0Init(void)   //1000微秒@12.000MHz
+  19          {
+  20   1        AUXR &= 0x7F;   //定时器时钟12T模式
+  21   1        TMOD &= 0xF0;   //设置定时器模式
+  22   1        TL0 = 0x9C;   //设置定时初始值
+  23   1        TH0 = 0xFF;   //设置定时初始值
+  24   1        TF0 = 0;    //清除TF0标志
+  25   1        TR0 = 1;    //定时器0开始计时
+  26   1        ET0=1;
+  27   1        EA=1;
+  28   1        PT0=1;//当只有一个中断的时候优先级可以不配置
+  29   1      }
+  30          
+  31          /*
+  32          void Timer0_Routine(void) interrupt 1
+  33          {
+  34            
+  35          }*/
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     23    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

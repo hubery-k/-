@@ -1,0 +1,66 @@
+C51 COMPILER V9.59.0.0   NIXIE                                                             02/26/2023 14:57:50 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE NIXIE
+OBJECT MODULE PLACED IN .\Objects\Nixie.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE Nixie.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\Nixie.
+                    -lst) TABS(2) OBJECT(.\Objects\Nixie.obj)
+
+line level    source
+
+   1          #include "Nixie.h"
+   2          #include "Delay.h"
+   3          void Nixie_Init(unsigned char n)
+   4          {
+   5   1        P2&=0X1F;//锁存
+   6   1        
+   7   1        if(n==1)
+   8   1        {
+   9   2          P0=0x00;//com端清0
+  10   2          P2=(P2&0x1f)|0xC0;//com端
+  11   2          
+  12   2        }
+  13   1        else if(n==2)
+  14   1        {
+  15   2          P0=0xFF;//段码端清0
+  16   2          P2=(P2&0x1f)|0xE0;//段码端
+  17   2        }
+  18   1      }
+  19          
+  20          void Nixie_Display(unsigned char pos,unsigned char value)
+  21          {
+  22   1        Nixie_Init(1);
+  23   1        P0 |= 0x01 << pos;
+  24   1        Nixie_Init(2);
+  25   1        P0 &= value;//低电平有效
+  26   1        Delay1ms();//稳定显示
+  27   1      }
+  28          
+  29          
+  30          void Nixie_NoDisplay()
+  31          {
+  32   1        P2&=0X1F;//锁存
+  33   1        //段选
+  34   1        P0=0x00;  //都不选中
+  35   1        P2=(P2&0X1F)|0XC0;
+  36   1        
+  37   1        
+  38   1        P2&=0X1F;//锁存
+  39   1        //位选
+  40   1        P0=0xFF;  //不点亮
+  41   1        P2=(P2&0X1F)|0XE0;
+  42   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    104    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

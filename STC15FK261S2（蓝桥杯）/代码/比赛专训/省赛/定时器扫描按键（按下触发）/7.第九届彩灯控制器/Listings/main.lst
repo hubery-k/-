@@ -1,0 +1,403 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              04/07/2023 22:44:24 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.ls
+                    -t) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "LED.h"
+   2          #include "RB.h"
+   3          #include "Nixie.h"
+   4          #include "KEY.h"
+   5          #include "Timer.h"
+   6          #include "AT24C02.h"
+   7          #include "PCF8591.h"
+   8          #include "Delay.h"
+   9          
+  10          /*SMG段码:0-F*/
+  11          uc code Nodot_SMG[]={0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0x88,0x83,0xc6,0xa1,0x86,0x8e};  
+  12          uc code dot_SMG[]={0x40,0x79,0x24,0x30,0x19,0x12,0x02,0x78,0x00,0x10,0x08,0x03,0x46,0x21,0x06,0x0e};
+  13          
+  14          f adc_value;    //AD采集的电压值
+  15          uc KeyNum;
+  16          uc Interface;   //显示界面（0-SMG熄灭）
+  17          uc S6_Set;
+  18          ui Flow_Interval;   //流转间隔（400ms~1200ms）
+  19          uc Compare;   //用于PWM的比较值
+  20          uc Running_Mode=1;    //运行模式编号
+  21          uc Light_Grade;   //LED亮度等级
+  22          uc Work_State=1;  //(工作状态1~4)
+  23          uc i;
+  24          ui FlowCount;   //流转状态计数
+  25          ui Temp;    //临时变量-用于获取并判断EEPROM的数值符合规定
+  26          
+  27          bit SW;   //0-流转启动  1-流转停止  
+  28          bit garde_flag;
+  29          bit blink_flag; //间隔闪烁
+  30          bit LED_State;  //（0-灭，1-亮）-用于电位器控制的PWM灯光
+  31          bit blink_State;  //用于设置0.8s闪烁
+  32          bit Save_flag;    //1-写入EEPROM
+  33          bit AD_flag;    //1-AD开始采集（50ms采集一次）
+  34          
+  35          /*硬件初始化函数*/
+  36          void Hardware_Init(void)
+  37          {
+  38   1        LED_Init();
+  39   1        RB_Init();
+  40   1        Timer0Init();
+  41   1        
+  42   1        Temp=AT24C02_ReadByte(0X01)*10;
+  43   1        if(Temp>=400&&Temp<=1200){Flow_Interval=Temp;}
+  44   1        else{Flow_Interval=400;}
+  45   1      }
+  46          
+  47          /*PCF8591应用函数*/
+  48          void USE_PCF8591()
+  49          {
+  50   1        if(AD_flag==1)
+  51   1        {
+  52   2          adc_value=PCF8591_ReadAD()*(5.0/255);
+  53   2          
+  54   2          if(adc_value>0&&adc_value<=1.2){Light_Grade=1;Compare=5;}
+C51 COMPILER V9.59.0.0   MAIN                                                              04/07/2023 22:44:24 PAGE 2   
+
+  55   2          else if(adc_value>1.2&&adc_value<=2.4){Light_Grade=2;Compare=10;}
+  56   2          else if(adc_value>2.4&&adc_value<=3.6){Light_Grade=3;Compare=15;}
+  57   2          else if(adc_value>3.6&&adc_value<=5.0){Light_Grade=4;Compare=20;}
+  58   2        }
+  59   1      }
+  60          
+  61          /*AT24C02应用函数*/
+  62          void USE_AT24C02()
+  63          {
+  64   1        if(Save_flag==1)
+  65   1        {
+  66   2          Save_flag=0;
+  67   2          //由于一个地址最大只能存取数值为256的数，所以这里进行除10再存储
+  68   2          AT24C02_WriteByte(0X01,Flow_Interval/10);
+  69   2          Delay5ms();
+  70   2        }
+  71   1      }
+  72          
+  73          /*LED应用函数*/
+  74          void USE_LED(void)
+  75          {
+  76   1        LED_Init();
+  77   1        if(LED_State==1)
+  78   1        {
+  79   2          if(Running_Mode==1)   //流转模式1
+  80   2          {
+  81   3            P0=0XFF<<i;
+  82   3          }
+  83   2          else if(Running_Mode==2)    //流转模式2
+  84   2          {
+  85   3            P0=0XFF>>i;
+  86   3          }
+  87   2          else if(Running_Mode==3)    //流转模式3
+  88   2          {
+  89   3            if(Work_State==1)
+  90   3            {
+  91   4              L1=0;L8=0;
+  92   4              L2=1;L3=1;L4=1;L5=1;L6=1;L7=1;
+  93   4            }
+  94   3            else if(Work_State==2)
+  95   3            {
+  96   4              L2=0;L7=0;
+  97   4              L1=1;L3=1;L4=1;L5=1;L6=1;L8=1;
+  98   4            }
+  99   3            else if(Work_State==3)
+ 100   3            {
+ 101   4              L3=0;L6=0;
+ 102   4              L1=1;L2=1;L4=1;L5=1;L7=1;L8=1;
+ 103   4            }
+ 104   3            else if(Work_State==4)
+ 105   3            {
+ 106   4              L4=0;L5=0;
+ 107   4              L1=1;L2=1;L3=1;L6=1;L7=1;L8=1;
+ 108   4            }
+ 109   3          }
+ 110   2          else if(Running_Mode==4)    //流转模式4
+ 111   2          {
+ 112   3            if(Work_State==1)
+ 113   3            {
+ 114   4              L4=0;L5=0;
+ 115   4              L1=1;L2=1;L3=1;L6=1;L7=1;L8=1;
+ 116   4            }
+C51 COMPILER V9.59.0.0   MAIN                                                              04/07/2023 22:44:24 PAGE 3   
+
+ 117   3            else if(Work_State==2)
+ 118   3            {
+ 119   4              L3=0;L6=0;
+ 120   4              L1=1;L2=1;L4=1;L5=1;L7=1;L8=1;
+ 121   4            }
+ 122   3            else if(Work_State==3)
+ 123   3            {
+ 124   4              L2=0;L7=0;
+ 125   4              L1=1;L3=1;L4=1;L5=1;L6=1;L8=1;
+ 126   4            }
+ 127   3            else if(Work_State==4)
+ 128   3            {
+ 129   4              L1=0;L8=0;
+ 130   4              L2=1;L3=1;L4=1;L5=1;L6=1;L7=1;
+ 131   4            }
+ 132   3          }
+ 133   2        }
+ 134   1        else
+ 135   1        {
+ 136   2          LED_Control(0XFF);
+ 137   2        }
+ 138   1        
+ 139   1        P2&=0X1F;
+ 140   1      } 
+ 141          
+ 142          /*按键应用函数*/
+ 143          void USE_KEY(void)
+ 144          {
+ 145   1        KeyNum=Key();
+ 146   1        if(KeyNum==7)   //S7-启动、停止按键
+ 147   1        {
+ 148   2          SW=~SW;
+ 149   2        }
+ 150   1        if(KeyNum==6)   //S6-设置按键
+ 151   1        {
+ 152   2          Interface=1;    //进入“流转间隔”设置界面
+ 153   2          blink_flag=1;
+ 154   2          S6_Set++;
+ 155   2          if(S6_Set==3){S6_Set=0;Interface=0;blink_flag=0;Save_flag=1;} //退出设置界面并保存”流转间隔“参数在EEPR
+             -OM中
+ 156   2        }
+ 157   1        
+ 158   1        if(Interface==1)  //在设置界面下
+ 159   1        {
+ 160   2          if(KeyNum==5)   //S5-（设置界面下）-加按键
+ 161   2          {
+ 162   3            i=0;
+ 163   3            FlowCount=0;
+ 164   3            Work_State=0;
+ 165   3            
+ 166   3            if(S6_Set==1)
+ 167   3            {
+ 168   4              Running_Mode+=1;
+ 169   4              if(Running_Mode==5){Running_Mode=1;}
+ 170   4            }
+ 171   3            else if(S6_Set==2)
+ 172   3            {
+ 173   4              Flow_Interval+=100;
+ 174   4              if(Flow_Interval>=1300){Flow_Interval=400;}
+ 175   4            }
+ 176   3          }
+ 177   2          if(KeyNum==4) //S4-（设置界面下）-减按键
+C51 COMPILER V9.59.0.0   MAIN                                                              04/07/2023 22:44:24 PAGE 4   
+
+ 178   2          {
+ 179   3            i=0;
+ 180   3            FlowCount=0;  //防止切换时LED状态卡死
+ 181   3            Work_State=0;
+ 182   3            
+ 183   3            if(S6_Set==1)
+ 184   3            {
+ 185   4              Running_Mode-=1;
+ 186   4              if(Running_Mode==0){Running_Mode=4;}
+ 187   4            }
+ 188   3            else if(S6_Set==2)
+ 189   3            {
+ 190   4              Flow_Interval-=100;
+ 191   4              if(Flow_Interval<=300){Flow_Interval=1200;}
+ 192   4            }
+ 193   3          }
+ 194   2        }
+ 195   1        
+ 196   1        if(Interface==0)  //S4-非设置状态下 显示亮度等级
+ 197   1        {
+ 198   2          if(Cont&0X08){garde_flag=1;}  //S4按下
+ 199   2          else{garde_flag=0;} //S4松开
+ 200   2        }
+ 201   1      }
+ 202          
+ 203          
+ 204          /*SMG应用函数*/
+ 205          void USE_SMG(void)
+ 206          {
+ 207   1        if(Interface==1)    //设置界面下的显示
+ 208   1        {
+ 209   2          if(S6_Set==1)
+ 210   2          {
+ 211   3            Nixie_SetBuf(0,0XBF);
+ 212   3            if(blink_State==1){Nixie_SetBuf(1,Nodot_SMG[Running_Mode]);}
+ 213   3            else{Nixie_SetBuf(1,0XFF);}
+ 214   3            Nixie_SetBuf(2,0XBF);
+ 215   3            
+ 216   3            Nixie_SetBuf(3,0XFF);
+ 217   3            if(Flow_Interval>999){Nixie_SetBuf(4,Nodot_SMG[Flow_Interval/1000]);}
+ 218   3            else{Nixie_SetBuf(4,0XFF);}
+ 219   3            if(Flow_Interval>99){Nixie_SetBuf(5,Nodot_SMG[(Flow_Interval/100)%10]);}
+ 220   3            else{Nixie_SetBuf(5,0XFF);}
+ 221   3            if(Flow_Interval>9){Nixie_SetBuf(6,Nodot_SMG[(Flow_Interval/10)%10]);}
+ 222   3            else{Nixie_SetBuf(6,0XFF);}
+ 223   3            Nixie_SetBuf(7,Nodot_SMG[Flow_Interval%10]);
+ 224   3          }
+ 225   2          else if(S6_Set==2)
+ 226   2          {
+ 227   3            if(blink_State==1)
+ 228   3            {
+ 229   4              if(Flow_Interval>999){Nixie_SetBuf(4,Nodot_SMG[Flow_Interval/1000]);}
+ 230   4              else{Nixie_SetBuf(4,0XFF);}
+ 231   4              if(Flow_Interval>99){Nixie_SetBuf(5,Nodot_SMG[(Flow_Interval/100)%10]);}
+ 232   4              else{Nixie_SetBuf(5,0XFF);}
+ 233   4              if(Flow_Interval>9){Nixie_SetBuf(6,Nodot_SMG[(Flow_Interval/10)%10]);}
+ 234   4              else{Nixie_SetBuf(6,0XFF);}
+ 235   4              Nixie_SetBuf(7,Nodot_SMG[Flow_Interval%10]);
+ 236   4            }
+ 237   3            else
+ 238   3            {
+ 239   4              Nixie_SetBuf(4,0XFF);
+C51 COMPILER V9.59.0.0   MAIN                                                              04/07/2023 22:44:24 PAGE 5   
+
+ 240   4              Nixie_SetBuf(5,0XFF);
+ 241   4              Nixie_SetBuf(6,0XFF);
+ 242   4              Nixie_SetBuf(7,0XFF);
+ 243   4            }
+ 244   3            
+ 245   3            Nixie_SetBuf(0,0XBF);
+ 246   3            Nixie_SetBuf(2,0XBF);
+ 247   3            Nixie_SetBuf(1,Nodot_SMG[Running_Mode]);
+ 248   3          }
+ 249   2          else if(S6_Set==0)
+ 250   2          {
+ 251   3            Nixie_SetBuf(0,0XFF);Nixie_SetBuf(1,0XFF);
+ 252   3            Nixie_SetBuf(2,0XFF);Nixie_SetBuf(3,0XFF);
+ 253   3            Nixie_SetBuf(4,0XFF);Nixie_SetBuf(5,0XFF);
+ 254   3            Nixie_SetBuf(6,0XFF);Nixie_SetBuf(7,0XFF);
+ 255   3          }
+ 256   2        }
+ 257   1        
+ 258   1        else if(Interface==0) //非设置界面下的显示
+ 259   1        {
+ 260   2          if(garde_flag==1)   //表示S4按下
+ 261   2          {
+ 262   3            Nixie_SetBuf(6,0XBF);
+ 263   3            Nixie_SetBuf(7,Nodot_SMG[Light_Grade]);
+ 264   3          }
+ 265   2          else
+ 266   2          {
+ 267   3            Nixie_SetBuf(0,0XFF);Nixie_SetBuf(1,0XFF);
+ 268   3            Nixie_SetBuf(2,0XFF);Nixie_SetBuf(3,0XFF);
+ 269   3            Nixie_SetBuf(4,0XFF);Nixie_SetBuf(5,0XFF);
+ 270   3            Nixie_SetBuf(6,0XFF);Nixie_SetBuf(7,0XFF);
+ 271   3          }
+ 272   2        }
+ 273   1      }
+ 274          
+ 275          
+ 276          void main(void)
+ 277          {
+ 278   1        Hardware_Init();
+ 279   1        while(1)
+ 280   1        {
+ 281   2          EA=0;
+ 282   2          USE_LED();
+ 283   2          EA=1;
+ 284   2          USE_SMG();
+ 285   2          USE_KEY();
+ 286   2          USE_PCF8591();
+ 287   2          USE_AT24C02();
+ 288   2        }
+ 289   1      }
+ 290          
+ 291          /*1ms的定时中断函数*/
+ 292          void Timer0_Routine(void) interrupt 1
+ 293          {
+ 294   1        static uc T0_Count0;
+ 295   1        static uc T0_Count1;
+ 296   1        static ui Blink_Count;    //PWM亮度控制计数
+ 297   1        static uc AD_Count;
+ 298   1        static uc PwmCount;
+ 299   1        
+ 300   1        /*定时器扫描按键、数码管*/
+ 301   1        T0_Count0++;
+C51 COMPILER V9.59.0.0   MAIN                                                              04/07/2023 22:44:24 PAGE 6   
+
+ 302   1        T0_Count1++;
+ 303   1        if(T0_Count0==2)  
+ 304   1        {
+ 305   2          T0_Count0=0;
+ 306   2          Nixie_Loop();
+ 307   2        }
+ 308   1        if(T0_Count1==10)
+ 309   1        {
+ 310   2          T0_Count1=0;
+ 311   2          KEY_Loop();
+ 312   2        }
+ 313   1        
+ 314   1        /*设置界面下0.8s的闪烁*/
+ 315   1        if(blink_flag==1)
+ 316   1        {
+ 317   2          Blink_Count++;
+ 318   2          if(Blink_Count==800)
+ 319   2          {
+ 320   3            Blink_Count=0;
+ 321   3            blink_State=~blink_State;
+ 322   3          }
+ 323   2        }
+ 324   1        else{Blink_Count=0;blink_State=0;}
+ 325   1        
+ 326   1        /*50ms采集一次AD*/
+ 327   1        AD_Count++;         
+ 328   1        if(AD_Count==50)    
+ 329   1        {
+ 330   2          AD_Count=0;
+ 331   2          AD_flag=1;
+ 332   2        }
+ 333   1        
+ 334   1        /*AD采集电位器的值控制LED亮度（PWM）*/
+ 335   1        PwmCount++;
+ 336   1        if(PwmCount<Compare)
+ 337   1        {
+ 338   2          LED_State=1;
+ 339   2        }
+ 340   1        else if(PwmCount>=Compare)
+ 341   1        {
+ 342   2          LED_State=0;
+ 343   2        }
+ 344   1        PwmCount%=20;
+ 345   1      
+ 346   1        /*LED流转模式与状态的切换*/
+ 347   1        if(SW==0)
+ 348   1        {
+ 349   2          FlowCount++;
+ 350   2          if(FlowCount==Flow_Interval)
+ 351   2          {
+ 352   3            FlowCount=0;
+ 353   3            if(Running_Mode==1 || Running_Mode==2)
+ 354   3            {
+ 355   4              i++;
+ 356   4              if(i==9){i=0;Running_Mode++;}
+ 357   4            }
+ 358   3            else if(Running_Mode==3 || Running_Mode==4)
+ 359   3            {
+ 360   4              Work_State++;
+ 361   4              if(Work_State==5){Work_State=1;Running_Mode++;}
+ 362   4              if(Running_Mode==5){Running_Mode=1;}
+ 363   4            }
+C51 COMPILER V9.59.0.0   MAIN                                                              04/07/2023 22:44:24 PAGE 7   
+
+ 364   3          }
+ 365   2        }
+ 366   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1692    ----
+   CONSTANT SIZE    =     32    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     24    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      7    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

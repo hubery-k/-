@@ -1,0 +1,20 @@
+".\Objects\STARTUP.obj",
+".\Objects\main.obj",
+".\Objects\LED.obj",
+".\Objects\RB.obj",
+".\Objects\Nixie.obj",
+".\Objects\KEY.obj",
+".\Objects\PCF8591.obj",
+".\Objects\AT24C02.obj",
+".\Objects\DS18B20.obj",
+".\Objects\CLOCK.obj",
+".\Objects\UART.obj",
+".\Objects\Sonic.obj",
+".\Objects\Timer.obj",
+".\Objects\Delay.obj",
+".\Objects\ds1302.obj",
+".\Objects\iic.obj",
+".\Objects\onewire.obj" 
+TO ".\Objects\Project" 
+PRINT(".\Listings\Project.m51") RAMSIZE(256) 
+DISABLEWARNING (16) 

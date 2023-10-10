@@ -1,0 +1,13 @@
+".\Objects\STARTUP.obj",
+".\Objects\main.obj",
+".\Objects\KEY.obj",
+".\Objects\LED.obj",
+".\Objects\RB.obj",
+".\Objects\NIXIE.obj",
+".\Objects\PCF8591.obj",
+".\Objects\UART.obj",
+".\Objects\Timer.obj",
+".\Objects\iic.obj" 
+TO ".\Objects\Project" 
+PRINT(".\Listings\Project.m51") RAMSIZE(256) 
+DISABLEWARNING (16) 

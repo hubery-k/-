@@ -1,0 +1,3 @@
+".\output\sonic.obj" 
+TO ".\output\sonic" 
+PRINT(".\output\sonic.m51") RAMSIZE(256) 

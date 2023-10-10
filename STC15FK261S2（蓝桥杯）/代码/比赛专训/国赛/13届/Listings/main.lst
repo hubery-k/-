@@ -1,0 +1,486 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              06/08/2023 20:04:27 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.ls
+                    -t) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "main.h"
+   2          
+   3          /***********±äÁ¿¶¨Òå*************/
+   4          uc KeyNum;
+   5          uc Interface;
+   6          uc Interface_P; //²ÎÊý×Ó½çÃæ
+   7          
+   8          ui F_temp;
+   9          ui F;
+  10          ui F_P=15;  //ÆµÂÊ²ÎÊý£¨µ÷Õû·¶Î§£º1.0KHz - 12.0KHz£©
+  11          
+  12          f adc_v;
+  13          uc dac_v;
+  14          
+  15          uc Humidity;
+  16          uc H_P=10;    //Êª¶È²ÎÊý£¨µ÷Õû·¶Î§£º10% - 60%£©
+  17          
+  18          ui Distance_CM;
+  19          ui D_P=1;   //¾àÀë²ÎÊý£¨µ÷Õû·¶Î§£º0.1M - 1.2M£©
+  20          bit F_Mode;
+  21          bit D_Mode;
+  22          bit led_run;
+  23          bit ADC_flag;
+  24          bit Sonic_flag;
+  25          bit F_flag;
+  26          bit H_flag;
+  27          bit D_flag;
+  28          bit RELAY_Flag;
+  29          bit S7_Flag;
+  30          bit Key_flag;
+  31          bit K7_Press;
+  32          bit PWM_State;
+  33          uc PWM;
+  34          uc PWM_J3=0X00;
+  35          
+  36          uc RELAY_Count;
+  37          
+  38          /***********Ó²¼þ³õÊ¼»¯º¯Êý*************/
+  39          
+  40          void Hardware_Init(void)
+  41          {
+  42   1        LED_Init();
+  43   1        RB_Init();
+  44   1        Timer0Init();
+  45   1        Timer2Init();
+  46   1        Sonic_Init();
+  47   1      }
+  48          
+  49          /***********ÈÎÎñ´¦Àíº¯Êý*************/
+  50          
+  51          void Task_Processing()
+  52          {
+  53   1        
+  54   1        if(ADC_flag==1)
+C51 COMPILER V9.59.0.0   MAIN                                                              06/08/2023 20:04:27 PAGE 2   
+
+  55   1        {
+  56   2          /*²É¼¯RB2µçÑ¹Öµ×ª»»ÎªÊª¶ÈÖµ*/
+  57   2          ADC_flag=0;
+  58   2          adc_v=PCF8591_ReadAD(1)*(5.0/255);
+  59   2          Humidity=(uc)(adc_v*(100/5.0));
+  60   2          
+  61   2          /*DACÊä³öµçÑ¹Öµ*/
+  62   2          if(Humidity<=H_P){dac_v=(uc)(1.0/5.0*255);}
+  63   2          else if(Humidity>=80){dac_v=255;}
+  64   2          else if(Humidity>H_P && Humidity<80)
+  65   2          {
+  66   3            dac_v=((uc)((Humidity-H_P)*(4.0/(80-H_P)))+1)/5.0*255;
+  67   3          }
+  68   2          PCF8591_WriteDA(dac_v);
+  69   2        }
+  70   1        /*²É¼¯³¬Éù²¨²â¾àÖµ*/
+  71   1        if(Sonic_flag==1)
+  72   1        {
+  73   2          Sonic_flag=0;
+  74   2          Distance_CM=Sonic_Work();
+  75   2          /*¼ÌµçÆ÷¿ØÖÆ¹¦ÄÜ*/
+  76   2          if(Distance_CM > (D_P*10) && RELAY_Flag==0)
+  77   2          {
+  78   3            RB_Init();RELAY=1;P2&=0X1F;
+  79   3            RELAY_Flag=1;
+  80   3          }
+  81   2          else if(Distance_CM <= (D_P*10) && RELAY_Flag==1)
+  82   2          {
+  83   3            RB_Init();RELAY=0;P2&=0X1F;
+  84   3            RELAY_Flag=0;
+  85   3            /*½«¼ÌµçÆ÷¿ª¹Ø´ÎÊýÐ´ÈëE2PROMÖÐ*/
+  86   3            AT24C02_WriteByte(0X00,++RELAY_Count);
+  87   3            Delay5ms();
+  88   3          }
+  89   2        }
+  90   1      
+  91   1        
+  92   1        /*PWMÊä³öÂö³åÐÅºÅ*/
+  93   1        if(F > F_P*100)
+  94   1        {
+  95   2          PWM_State=1;//Êä³ö1KHz80%Õ¼¿Õ±ÈµÄÐÅºÅ
+  96   2        }
+  97   1        else
+  98   1        {
+  99   2          PWM_State=0;//Êä³ö1KHz20%Õ¼¿Õ±ÈµÄÐÅºÅ
+ 100   2        }
+ 101   1      }
+ 102          
+ 103          /***********LEDÓ¦ÓÃº¯Êý*************/
+ 104          
+ 105          void USE_LED()
+ 106          {
+ 107   1        LED_Init();
+ 108   1        
+ 109   1        if(F_flag==1){L1=0;}
+ 110   1        else{L1=1;}
+ 111   1        if(H_flag==1){L2=0;}
+ 112   1        else{L2=1;}
+ 113   1        if(D_flag==1){L3=0;}
+ 114   1        else{L3=1;}
+ 115   1        
+ 116   1        if(F > F_P*100){L4=0;}  //ÓÉÓÚF_PÓëFµ¥Î»²»Í³Ò»ÇÒF-PÎªÁË·½±ã²Ù×÷±»Ä¬ÈÏ·Å´ó10±¶£¬ËùÒÔF_PÔÙ³ËÒÔ100ÓÉKHz×ª»»Îª
+C51 COMPILER V9.59.0.0   MAIN                                                              06/08/2023 20:04:27 PAGE 3   
+
+             -Hz
+ 117   1        else{L4=1;}
+ 118   1        if(Humidity > H_P){L5=0;}
+ 119   1        else{L5=1;}
+ 120   1        if(Distance_CM > D_P*10){L6=0;} //ÓÉÓÚDistance_CMÓëD_Pµ¥Î»²»Í³Ò»ÇÒD_PÎªÁË·½±ã²Ù×÷±»Ä¬ÈÏ·Å´ó10±¶£¬ËùÒÔD_PÔ
+             -Ù³ËÒÔ10ÓÉM×ª»»ÎªCm
+ 121   1        else{L6=1;}
+ 122   1        
+ 123   1        L7=1;L8=1;
+ 124   1        P2&=0X1F;
+ 125   1      }
+ 126          
+ 127          /***********KEYÓ¦ÓÃº¯Êý*************/
+ 128          
+ 129          void USE_KEY()
+ 130          {
+ 131   1        if(Key_flag==1)
+ 132   1        {
+ 133   2          Key_flag=0;
+ 134   2          KeyNum=KEY();
+ 135   2          /*S4-½çÃæÇÐ»»°´¼ü*/
+ 136   2          if(KeyNum==4)
+ 137   2          {
+ 138   3            Interface++;
+ 139   3            Interface%=4;
+ 140   3          }
+ 141   2          /*S5-²ÎÊý×Ó½çÃæÇÐ»»°´¼ü*/
+ 142   2          if(KeyNum==5)
+ 143   2          {
+ 144   3            if(Interface==3)
+ 145   3            {
+ 146   4              Interface_P++;
+ 147   4              Interface_P%=3;
+ 148   4            }
+ 149   3          }
+ 150   2          /*S6-²ÎÊý¼Ó°´¼ü*/
+ 151   2          if(KeyNum==6)
+ 152   2          {
+ 153   3            /*²ÎÊý½çÃæÏÂ*/
+ 154   3            if(Interface==3)
+ 155   3            {
+ 156   4              if(Interface_P==0){F_P+=5;}
+ 157   4              else if(Interface_P==1){H_P+=10;}
+ 158   4              else if(Interface_P==2){D_P+=1;}
+ 159   4              /*±ß½çÅÐ¶Ï*/
+ 160   4              if(F_P > 120){F_P = 10;}
+ 161   4              if(H_P > 60){H_P = 10;}
+ 162   4              if(D_P > 12){D_P = 1;}
+ 163   4            }
+ 164   3            /*²â¾à½çÃæÏÂ*/
+ 165   3            if(Interface==2)
+ 166   3            {
+ 167   4              D_Mode=!D_Mode;
+ 168   4            }
+ 169   3          }
+ 170   2          /*S7-²ÎÊý¼õ°´¼ü*/
+ 171   2          if(KeyNum==7)
+ 172   2          {
+ 173   3            /*²ÎÊý½çÃæÏÂ*/
+ 174   3            if(Interface==3)
+ 175   3            {
+ 176   4              if(Interface_P==0){F_P-=5;}
+C51 COMPILER V9.59.0.0   MAIN                                                              06/08/2023 20:04:27 PAGE 4   
+
+ 177   4              else if(Interface_P==1){H_P-=10;}
+ 178   4              else if(Interface_P==2){D_P-=1;}
+ 179   4              /*±ß½çÅÐ¶Ï*/
+ 180   4              if(F_P < 10){F_P = 120;}
+ 181   4              if(H_P < 10){H_P = 60;}
+ 182   4              if(D_P < 1){D_P = 12;}
+ 183   4            }
+ 184   3            /*ÆµÂÊ½çÃæÏÂ*/
+ 185   3            if(Interface==0)
+ 186   3            {
+ 187   4              F_Mode=!F_Mode;
+ 188   4            }
+ 189   3          }
+ 190   2          
+ 191   2          /*S7-³¤°´¹¦ÄÜ*/
+ 192   2          if(Interface==1)
+ 193   2          {
+ 194   3            if(Cont==7){K7_Press=1;}
+ 195   3            else{K7_Press=0;}
+ 196   3          }
+ 197   2        }
+ 198   1      
+ 199   1      }
+ 200          
+ 201          
+ 202          /***********SMGÓ¦ÓÃº¯Êý*************/
+ 203          
+ 204          void USE_SMG()
+ 205          {
+ 206   1        /*ÆµÂÊ½çÃæ*/
+ 207   1        if(Interface==0)
+ 208   1        {
+ 209   2          Nixie_SetBuf(0,Nodot_SMG[15]);  //±êÊ¶·û-F
+ 210   2          Nixie_SetBuf(1,0XFF);
+ 211   2          /*Hz*/
+ 212   2          if(F_Mode==0)
+ 213   2          {
+ 214   3            if(F>99999){Nixie_SetBuf(2,Nodot_SMG[F/100000]);}
+ 215   3            else{Nixie_SetBuf(2,0XFF);}
+ 216   3            if(F>9999){Nixie_SetBuf(3,Nodot_SMG[F/10000%10]);}
+ 217   3            else{Nixie_SetBuf(3,0XFF);}
+ 218   3            if(F>999){Nixie_SetBuf(4,Nodot_SMG[F/1000%10]);}
+ 219   3            else{Nixie_SetBuf(4,0XFF);}
+ 220   3            if(F>99){Nixie_SetBuf(5,Nodot_SMG[F/100%10]);}
+ 221   3            else{Nixie_SetBuf(5,0XFF);}
+ 222   3            if(F>9){Nixie_SetBuf(6,Nodot_SMG[F/10%10]);}
+ 223   3            else{Nixie_SetBuf(6,0XFF);}
+ 224   3            Nixie_SetBuf(7,Nodot_SMG[F%10]);
+ 225   3          }
+ 226   2          /*KHz*/
+ 227   2          else
+ 228   2          {
+ 229   3            if(F>99999){Nixie_SetBuf(2,Nodot_SMG[F/100000]);}
+ 230   3            else{Nixie_SetBuf(2,0XFF);}
+ 231   3            if(F>9999){Nixie_SetBuf(3,Nodot_SMG[F/10000%10]);}
+ 232   3            else{Nixie_SetBuf(3,0XFF);}
+ 233   3            Nixie_SetBuf(4,dot_SMG[F/1000%10]);
+ 234   3            Nixie_SetBuf(5,Nodot_SMG[F/100%10]);
+ 235   3            Nixie_SetBuf(6,Nodot_SMG[F/10%10]);
+ 236   3            Nixie_SetBuf(7,Nodot_SMG[F%10]);
+ 237   3          }
+ 238   2      
+C51 COMPILER V9.59.0.0   MAIN                                                              06/08/2023 20:04:27 PAGE 5   
+
+ 239   2        }
+ 240   1        /*Êª¶È½çÃæ*/
+ 241   1        else if(Interface==1)
+ 242   1        {
+ 243   2          Nixie_SetBuf(0,0X89); //±êÊ¶·û-H
+ 244   2          Nixie_SetBuf(1,0XFF);
+ 245   2          Nixie_SetBuf(2,0XFF);
+ 246   2          Nixie_SetBuf(3,0XFF);
+ 247   2          Nixie_SetBuf(4,0XFF);
+ 248   2          Nixie_SetBuf(5,0XFF);
+ 249   2          Nixie_SetBuf(6,Nodot_SMG[Humidity/10]);
+ 250   2          Nixie_SetBuf(7,Nodot_SMG[Humidity%10]);
+ 251   2        }
+ 252   1        /*²â¾à½çÃæ*/
+ 253   1        else if(Interface==2)
+ 254   1        {
+ 255   2          Nixie_SetBuf(0,Nodot_SMG[10]);  //±êÊ¶·û-A
+ 256   2          Nixie_SetBuf(1,0XFF);
+ 257   2          Nixie_SetBuf(2,0XFF);
+ 258   2          Nixie_SetBuf(3,0XFF);
+ 259   2          Nixie_SetBuf(4,0XFF);
+ 260   2          /*cm*/
+ 261   2          if(D_Mode==0)
+ 262   2          {
+ 263   3            if(Distance_CM>99){Nixie_SetBuf(5,Nodot_SMG[Distance_CM/100]);}
+ 264   3            else{Nixie_SetBuf(5,0XFF);}
+ 265   3            if(Distance_CM>9){Nixie_SetBuf(6,Nodot_SMG[Distance_CM/10%10]);}
+ 266   3            else{Nixie_SetBuf(6,0XFF);}
+ 267   3            Nixie_SetBuf(7,Nodot_SMG[Distance_CM%10]);
+ 268   3          }
+ 269   2          /*m*/
+ 270   2          else
+ 271   2          {
+ 272   3            Nixie_SetBuf(5,dot_SMG[Distance_CM/100]);
+ 273   3            Nixie_SetBuf(6,Nodot_SMG[Distance_CM/10%10]);
+ 274   3            Nixie_SetBuf(7,Nodot_SMG[Distance_CM%10]);
+ 275   3          }
+ 276   2        }
+ 277   1        /*²ÎÊý½çÃæ*/
+ 278   1        else if(Interface==3)
+ 279   1        {
+ 280   2          Nixie_SetBuf(0,0X8C); //±êÊ¶·û-P
+ 281   2          Nixie_SetBuf(2,0XFF);
+ 282   2          Nixie_SetBuf(3,0XFF);
+ 283   2          Nixie_SetBuf(4,0XFF);
+ 284   2          //²âÊÔÓÃ£¨¼ÌµçÆ÷¿ª¹Ø´ÎÊý£©
+ 285   2      //    Nixie_SetBuf(3,Nodot_SMG[RELAY_Count/10]);
+ 286   2      //    Nixie_SetBuf(4,Nodot_SMG[RELAY_Count%10]);
+ 287   2          /*P1-ÆµÂÊ²ÎÊý½çÃæ*/
+ 288   2          if(Interface_P==0)
+ 289   2          {
+ 290   3            Nixie_SetBuf(1,Nodot_SMG[1]);
+ 291   3            if(F_P>99){Nixie_SetBuf(5,Nodot_SMG[F_P/100]);}
+ 292   3            else{Nixie_SetBuf(5,0XFF);}
+ 293   3            if(F_P>9){Nixie_SetBuf(6,dot_SMG[F_P/10%10]);}
+ 294   3            else{Nixie_SetBuf(6,0XFF);}
+ 295   3            Nixie_SetBuf(7,Nodot_SMG[F_P%10]);
+ 296   3          }
+ 297   2          /*P2-Êª¶È²ÎÊý½çÃæ*/
+ 298   2          else if(Interface_P==1)
+ 299   2          {
+ 300   3            Nixie_SetBuf(1,Nodot_SMG[2]);
+C51 COMPILER V9.59.0.0   MAIN                                                              06/08/2023 20:04:27 PAGE 6   
+
+ 301   3            Nixie_SetBuf(5,0XFF);
+ 302   3            Nixie_SetBuf(6,Nodot_SMG[H_P/10]);
+ 303   3            Nixie_SetBuf(7,Nodot_SMG[H_P%10]);
+ 304   3          }
+ 305   2          /*P3-¾àÀë²ÎÊý½çÃæ*/
+ 306   2          else if(Interface_P==2)
+ 307   2          {
+ 308   3            Nixie_SetBuf(1,Nodot_SMG[3]);
+ 309   3            Nixie_SetBuf(5,0XFF);
+ 310   3            Nixie_SetBuf(6,dot_SMG[D_P/10]);
+ 311   3            Nixie_SetBuf(7,Nodot_SMG[D_P%10]);
+ 312   3          }
+ 313   2        }
+ 314   1      }
+ 315          
+ 316          
+ 317          /***********Ö÷º¯Êý*************/
+ 318          void main()
+ 319          {
+ 320   1        Hardware_Init();
+ 321   1        while(1)
+ 322   1        {
+ 323   2          if(led_run==1){led_run=0;USE_LED();}
+ 324   2      
+ 325   2          USE_SMG();
+ 326   2          USE_KEY();
+ 327   2          Task_Processing();
+ 328   2        }
+ 329   1      }
+ 330          
+ 331          /***********ÖÐ¶Ïº¯Êý*************/
+ 332          /*T0ÓÃ×÷NE555*/
+ 333          void Timer0_Routine(void) interrupt 1
+ 334          {
+ 335   1        F_temp++;
+ 336   1      }
+ 337          
+ 338          /*T2ÓÃ×÷É¨Ãè°´¼üºÍÊýÂë¹Ü*/
+ 339          void Timer2_Routine(void) interrupt 12
+ 340          {
+ 341   1        static uc KEY_Count;
+ 342   1        static uc SMG_Count;
+ 343   1        static ui ADC_Count;
+ 344   1        static ui F_Count;
+ 345   1        static ui S7_Count;
+ 346   1        static ui Sonic_Count;
+ 347   1        static ui Interface_FCount;
+ 348   1        static ui Interface_HCount;
+ 349   1        static ui Interface_DCount;
+ 350   1        
+ 351   1        led_run=1;    //LEDÔËÐÐ²»ÊÜÖÐ¶ÏÓ°Ïì
+ 352   1        /*É¨Ãè°´¼üºÍÊýÂë¹Ü*/
+ 353   1        KEY_Count++;
+ 354   1        if(KEY_Count==100)
+ 355   1        {
+ 356   2          KEY_Count=0;
+ 357   2          Key_flag=1;
+ 358   2      //    KEY_Loop();
+ 359   2        }
+ 360   1        SMG_Count++;
+ 361   1        if(SMG_Count==20)
+ 362   1        {
+C51 COMPILER V9.59.0.0   MAIN                                                              06/08/2023 20:04:27 PAGE 7   
+
+ 363   2          SMG_Count=0;
+ 364   2          Nixie_Loop();
+ 365   2        }
+ 366   1        /*100ms²É¼¯Ò»´ÎADÊý¾Ý*/
+ 367   1        ADC_Count++;
+ 368   1        if(ADC_Count==1000)
+ 369   1        {
+ 370   2          ADC_Count=0;
+ 371   2          ADC_flag=1;
+ 372   2        }
+ 373   1        /*200ms²É¼¯Ò»´Î²â¾àÖµÊý¾Ý*/
+ 374   1        Sonic_Count++;
+ 375   1        if(Sonic_Count==2000)
+ 376   1        {
+ 377   2          Sonic_Count=0;
+ 378   2          Sonic_flag=1;
+ 379   2        }
+ 380   1        /*1s²É¼¯Ò»´ÎÆµÂÊÖµ*/
+ 381   1        F_Count++;
+ 382   1        if(F_Count==10000)
+ 383   1        {
+ 384   2          F_Count=0;
+ 385   2          F=F_temp;
+ 386   2          F_temp=0;
+ 387   2        }
+ 388   1        /*S7³¤°´1s*/
+ 389   1        if(K7_Press==1)
+ 390   1        {
+ 391   2          S7_Count++;
+ 392   2          if(S7_Count==10000)
+ 393   2          {
+ 394   3            S7_Count=0;
+ 395   3            RELAY_Count=0;
+ 396   3          }
+ 397   2        }
+ 398   1        else{S7_Count=0;}
+ 399   1        /*L1ÒÔ0.1sÉÁË¸*/
+ 400   1        if(Interface==0)
+ 401   1        {
+ 402   2          Interface_FCount++;
+ 403   2          if(Interface_FCount==1000)
+ 404   2          {
+ 405   3            Interface_FCount=0;
+ 406   3            F_flag=~F_flag;
+ 407   3          }
+ 408   2        }
+ 409   1        else{F_flag=0;Interface_FCount=0;}
+ 410   1        /*L2ÒÔ0.1sÉÁË¸*/
+ 411   1        if(Interface==1)
+ 412   1        {
+ 413   2          Interface_HCount++;
+ 414   2          if(Interface_HCount==1000)
+ 415   2          {
+ 416   3            Interface_HCount=0;
+ 417   3            H_flag=~H_flag;
+ 418   3          }
+ 419   2        }
+ 420   1        else{H_flag=0;Interface_HCount=0;}
+ 421   1        /*L3ÒÔ0.1sÉÁË¸*/
+ 422   1        if(Interface==2)
+ 423   1        {
+ 424   2          Interface_DCount++;
+C51 COMPILER V9.59.0.0   MAIN                                                              06/08/2023 20:04:27 PAGE 8   
+
+ 425   2          if(Interface_DCount==1000)
+ 426   2          {
+ 427   3            Interface_DCount=0;
+ 428   3            D_flag=~D_flag;
+ 429   3          }
+ 430   2        }
+ 431   1        else{D_flag=0;Interface_DCount=0;}
+ 432   1        
+ 433   1        /*PWMÊä³ö²¿·Ö*/
+ 434   1        PWM++;
+ 435   1        if(PWM_State==1)
+ 436   1        {
+ 437   2          if(PWM>=8){PWM_J3|=0X20;}
+ 438   2          else{PWM_J3&=~0X20;}
+ 439   2        }
+ 440   1        else
+ 441   1        {
+ 442   2          if(PWM>=2){PWM_J3|=0X20;}
+ 443   2          else{PWM_J3&=~0X20;}
+ 444   2        }
+ 445   1        PWM%=10;
+ 446   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2327    ----
+   CONSTANT SIZE    =     32    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     39    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =     13    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

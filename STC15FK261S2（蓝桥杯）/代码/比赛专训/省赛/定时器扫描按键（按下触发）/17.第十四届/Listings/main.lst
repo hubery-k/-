@@ -1,0 +1,487 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              05/31/2023 15:09:46 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.ls
+                    -t) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "main.h"
+   2          
+   3          uc Time[3]={0X05,0X03,0X13};
+   4          uc Interface;//界面
+   5          uc Interface_son; //回显界面下的子界面
+   6          bit Interface_TH; //温湿度界面
+   7          bit Interface_flag; //（1-是温湿度界面 0-不是温湿度界面）
+   8          
+   9          uc KeyNum;  //键值
+  10          f T;  //温度数据
+  11          char T_P=30;//温度参数（范围：0~99）
+  12          uc T_Max; //最大温度
+  13          f T_Ave;  //平均温度
+  14          f T_temp; //温度临时变量（用来存储上一次读取的温度值）
+  15          uc H; //湿度
+  16          uc H_Max; //最大湿度
+  17          f H_Ave;  //平均湿度
+  18          f H_temp; //湿度临时变量（用来存储上一次读取的湿度值）
+  19          f adc_v;  //通过AD读取的光敏值转换为（0~5V）电压
+  20          ui F; //NE555测的频率
+  21          ui F_temp;  //频率临时变量
+  22          
+  23          uc Trg_Count;   //触发次数
+  24          uc Trg_Time[3];   //触发时间
+  25          bit Trg_flag; //触发标志位
+  26          
+  27          bit CLOCK_flag; //时间数据读取标志位
+  28          bit Temperature_flag; //温度读取标志位
+  29          bit AD_flag;  //AD值读取标志位
+  30          bit Invalid_data; //无效数据标志位
+  31          bit L4_flag;  //L4标志位
+  32          bit L4_blink;
+  33          bit L6_flag;  //L6标志位
+  34          bit S9_flag;  //按键S9标志位（按下-1 松开-0）
+  35          bit KEY_flag;
+  36          
+  37          /*延时函数*/
+  38          void Delay750ms()   //@12.000MHz
+  39          {
+  40   1        unsigned char i, j, k;
+  41   1      
+  42   1        _nop_();
+  43   1        _nop_();
+  44   1        i = 35;
+  45   1        j = 51;
+  46   1        k = 182;
+  47   1        do
+  48   1        {
+  49   2          do
+  50   2          {
+  51   3            while (--k);
+  52   3          } while (--j);
+  53   2        } while (--i);
+  54   1      }
+C51 COMPILER V9.59.0.0   MAIN                                                              05/31/2023 15:09:46 PAGE 2   
+
+  55          
+  56          
+  57          /*硬件初始化函数*/
+  58          void Hardware_Init()
+  59          {
+  60   1        LED_Init();
+  61   1        RB_Init();
+  62   1        Timer0Init();
+  63   1        Timer1Init();
+  64   1        Timer2Init();
+  65   1        DS1302_WriteTime(Time); 
+  66   1        DS18B20_ConvertT();
+  67   1        Delay750ms();
+  68   1      }
+  69          
+  70          
+  71          /*任务处理函数*/
+  72          void Task_Processing()
+  73          {
+  74   1        //获取时间数据 （50ms采集一次时间值）
+  75   1        if(CLOCK_flag==1)
+  76   1        {
+  77   2          CLOCK_flag=0;
+  78   2          DS1302_ReadTime(Time);
+  79   2        }
+  80   1        
+  81   1        //获取AD采集光敏数值（50ms采集一次电压值）
+  82   1        if(AD_flag==1)
+  83   1        {
+  84   2          AD_flag=0;
+  85   2          adc_v=PCF8591_ReadAD(0)*(5.0/255);
+  86   2        }
+  87   1        
+  88   1        //光->暗 触发一次温湿度数据采集功能
+  89   1        if(Trg_flag==0 && adc_v>=1.0 && Interface_flag==0)  //亮状态(可以防止3s内重复触发)
+  90   1        {
+  91   2          Trg_flag=1;
+  92   2          T_temp=T;
+  93   2          H_temp=H;
+  94   2        }
+  95   1        else if(adc_v<1.0 && Trg_flag==1) //暗状态
+  96   1        {
+  97   2          AUXR |= 0x10; //打开定时器2计时3s
+  98   2          Interface_TH=1; //进入温湿度页面
+  99   2          Trg_Time[1]=Time[1];  //保存触发采集的时间
+ 100   2          Trg_Time[2]=Time[2];
+ 101   2          Interface_flag=1;
+ 102   2          
+ 103   2          /*温度采集*/
+ 104   2          if(Temperature_flag==1)
+ 105   2          {
+ 106   3            Temperature_flag=0;
+ 107   3            DS18B20_ConvertT();
+ 108   3            T=DS18B20_ReadT();
+ 109   3            Trg_flag=0; //只触发一次
+ 110   3            Trg_Count+=1; //触发次数加1
+ 111   3            
+ 112   3            if(Trg_Count==1){T_Ave=(T+T_Ave);}  //平均温度计算
+ 113   3            else{T_Ave=(T+T_Ave)/2;}
+ 114   3            if(T_Max < T){T_Max=(uc)T;} //最大温度计算
+ 115   3          }
+ 116   2          
+C51 COMPILER V9.59.0.0   MAIN                                                              05/31/2023 15:09:46 PAGE 3   
+
+ 117   2          /*湿度采集*/
+ 118   2          if(F <= 200){H=10;Invalid_data=1;}
+ 119   2          else if(F >= 2000){H=90;Invalid_data=1;}
+ 120   2          else if(F<2000 && F>200)
+ 121   2          {
+ 122   3            Invalid_data=0; //有效数据
+ 123   3            H=(uc)((F-200)*(80.0/1800))+10;
+ 124   3          }
+ 125   2          if(Trg_Count==1){H_Ave=(H+H_Ave);}  //平均湿度计算
+ 126   2          else{H_Ave=(H+H_Ave)/2;}
+ 127   2          if(H_Max < H){H_Max=H;} //最大湿度计算
+ 128   2          
+ 129   2          /*L4状态判断*/
+ 130   2          if(T>T_P){L4_flag=1;} 
+ 131   2          else{L4_flag=0;}
+ 132   2          
+ 133   2          /*L6状态判断*/
+ 134   2          if(Trg_Count==1){T_temp=T;H_temp=H;}  //上一个状态
+ 135   2          else if(Trg_Count>=2) //下一个状态
+ 136   2          {
+ 137   3            if(T > T_temp && H > H_temp){L6_flag=1;}
+ 138   3            else{L6_flag=0;}
+ 139   3            T_temp=T;
+ 140   3            H_temp=H;
+ 141   3          } 
+ 142   2        }
+ 143   1      }
+ 144          
+ 145          void USE_KEY()
+ 146          {
+ 147   1        if(KEY_flag==1)
+ 148   1        {
+ 149   2          KEY_flag=0;
+ 150   2          
+ 151   2          KeyNum=KEY();
+ 152   2          if(KeyNum==4)
+ 153   2          {
+ 154   3            Interface++;
+ 155   3            Interface_son=0;
+ 156   3            Interface%=3;
+ 157   3          }
+ 158   2          if(KeyNum==5)
+ 159   2          {
+ 160   3            if(Interface==1)
+ 161   3            {
+ 162   4              Interface_son++;
+ 163   4              Interface_son%=3;
+ 164   4            }
+ 165   3          }
+ 166   2          if(Interface==2)
+ 167   2          {
+ 168   3            if(KeyNum==8){T_P+=1;}
+ 169   3            if(KeyNum==9){T_P-=1;}
+ 170   3            if(T_P>99){T_P=0;}
+ 171   3            if(T_P<0){T_P=99;}
+ 172   3          }
+ 173   2        }
+ 174   1      //  KeyNum=KEY();
+ 175   1      //  if(KeyNum==4)
+ 176   1      //  {
+ 177   1      //    Interface++;
+ 178   1      //    Interface_son=0;
+C51 COMPILER V9.59.0.0   MAIN                                                              05/31/2023 15:09:46 PAGE 4   
+
+ 179   1      //    Interface%=3;
+ 180   1      //  }
+ 181   1      //  if(KeyNum==5)
+ 182   1      //  {
+ 183   1      //    if(Interface==1)
+ 184   1      //    {
+ 185   1      //      Interface_son++;
+ 186   1      //      Interface_son%=3;
+ 187   1      //    }
+ 188   1      //  }
+ 189   1      //  
+ 190   1      //  if(Interface==2)
+ 191   1      //  {
+ 192   1      //    if(KeyNum==8){T_P+=1;}
+ 193   1      //    if(KeyNum==9){T_P-=1;}
+ 194   1      //    if(T_P>99){T_P=0;}
+ 195   1      //    if(T_P<0){T_P=99;}
+ 196   1      //  }
+ 197   1      //  /*长按功能*/
+ 198   1      //  if(Interface==1)  
+ 199   1      //  {
+ 200   1      //    if(Interface_son==2)
+ 201   1      //    {
+ 202   1      //      if(Cont&0X44){S9_flag=1;}
+ 203   1      //      else{S9_flag=0;}
+ 204   1      //    }
+ 205   1      //  }
+ 206   1      }
+ 207          
+ 208          void USE_LED()
+ 209          {
+ 210   1        LED_Init();
+ 211   1        /*界面指示灯*/
+ 212   1        if(Interface==0 && Interface_flag==0){L1=0;}  //时间界面下
+ 213   1        else{L1=1;}
+ 214   1        if(Interface==1 && Interface_flag==0){L2=0;}  //回显界面下
+ 215   1        else{L2=1;}
+ 216   1        if(Interface_TH==1){L3=0;}  //温湿度界面
+ 217   1        else{L3=1;}
+ 218   1        
+ 219   1        /*报警指示灯*/
+ 220   1        if(L4_blink==1){L4=0;}
+ 221   1        else{L4=1;}
+ 222   1        if(Invalid_data==1){L5=0;}
+ 223   1        else{L5=1;}
+ 224   1        if(L6_flag==1){L6=0;}
+ 225   1        else{L6=1;}
+ 226   1      
+ 227   1        P2&=0X1F;
+ 228   1      }
+ 229          
+ 230          void USE_SMG()
+ 231          {
+ 232   1        if(Interface_TH==1) //温湿度界面
+ 233   1        {
+ 234   2          Nixie_SetBuf(0,Nodot_SMG[14]);//标识符-E
+ 235   2          Nixie_SetBuf(1,0XFF);
+ 236   2          Nixie_SetBuf(2,0XFF);
+ 237   2          Nixie_SetBuf(3,Nodot_SMG[(ui)T_Ave/10]);  //温度
+ 238   2          Nixie_SetBuf(4,Nodot_SMG[(ui)T_Ave%10]);
+ 239   2          Nixie_SetBuf(5,0XBF);
+ 240   2          if(Invalid_data==0)
+C51 COMPILER V9.59.0.0   MAIN                                                              05/31/2023 15:09:46 PAGE 5   
+
+ 241   2          {
+ 242   3            Nixie_SetBuf(6,Nodot_SMG[H/10]);  //湿度
+ 243   3            Nixie_SetBuf(7,Nodot_SMG[H%10]);
+ 244   3          }
+ 245   2          else
+ 246   2          {
+ 247   3            Nixie_SetBuf(6,Nodot_SMG[10]);  //湿度
+ 248   3            Nixie_SetBuf(7,Nodot_SMG[10]);
+ 249   3          }
+ 250   2        }
+ 251   1        else
+ 252   1        {
+ 253   2          if(Interface==0)  //时间界面
+ 254   2          {
+ 255   3            Nixie_SetBuf(0,Nodot_SMG[Time[2]/16]);
+ 256   3            Nixie_SetBuf(1,Nodot_SMG[Time[2]%16]);
+ 257   3            Nixie_SetBuf(2,0XBF);
+ 258   3            Nixie_SetBuf(3,Nodot_SMG[Time[1]/16]);
+ 259   3            Nixie_SetBuf(4,Nodot_SMG[Time[1]%16]);
+ 260   3            Nixie_SetBuf(5,0XBF);
+ 261   3            Nixie_SetBuf(6,Nodot_SMG[Time[0]/16]);
+ 262   3            Nixie_SetBuf(7,Nodot_SMG[Time[0]%16]);
+ 263   3          }
+ 264   2          else if(Interface==1) //回显界面
+ 265   2          {
+ 266   3            if(Interface_son==0)  //温度回显
+ 267   3            {
+ 268   4              Nixie_SetBuf(0,Nodot_SMG[12]);//标识符-C
+ 269   4              Nixie_SetBuf(1,0XFF);
+ 270   4              if(Trg_Count==0)
+ 271   4              {
+ 272   5                Nixie_SetBuf(2,0XFF);
+ 273   5                Nixie_SetBuf(3,0XFF);
+ 274   5                Nixie_SetBuf(4,0XFF);
+ 275   5                Nixie_SetBuf(5,0XFF);
+ 276   5                Nixie_SetBuf(6,0XFF);
+ 277   5                Nixie_SetBuf(7,0XFF);
+ 278   5              }
+ 279   4              else
+ 280   4              {
+ 281   5                Nixie_SetBuf(2,Nodot_SMG[T_Max/10]);  //最大温度
+ 282   5                Nixie_SetBuf(3,Nodot_SMG[T_Max%10]);
+ 283   5                Nixie_SetBuf(4,0XBF);
+ 284   5                Nixie_SetBuf(5,Nodot_SMG[((ui)(T_Ave*10))/100]);//平均温度
+ 285   5                Nixie_SetBuf(6,dot_SMG[((ui)(T_Ave*10))/10%10]);
+ 286   5                Nixie_SetBuf(7,Nodot_SMG[((ui)(T_Ave*10))%10]);
+ 287   5              }
+ 288   4            }
+ 289   3            else if(Interface_son==1) //湿度回显
+ 290   3            {
+ 291   4              Nixie_SetBuf(0,0X89);//标识符-H
+ 292   4              Nixie_SetBuf(1,0XFF);
+ 293   4              if(Trg_Count==0)
+ 294   4              {
+ 295   5                Nixie_SetBuf(2,0XFF);
+ 296   5                Nixie_SetBuf(3,0XFF);
+ 297   5                Nixie_SetBuf(4,0XFF);
+ 298   5                Nixie_SetBuf(5,0XFF);
+ 299   5                Nixie_SetBuf(6,0XFF);
+ 300   5                Nixie_SetBuf(7,0XFF);
+ 301   5              }
+ 302   4              else
+C51 COMPILER V9.59.0.0   MAIN                                                              05/31/2023 15:09:46 PAGE 6   
+
+ 303   4              {
+ 304   5                Nixie_SetBuf(2,Nodot_SMG[H_Max/10]);  //最大湿度
+ 305   5                Nixie_SetBuf(3,Nodot_SMG[H_Max%10]);
+ 306   5                Nixie_SetBuf(4,0XBF);
+ 307   5                Nixie_SetBuf(5,Nodot_SMG[((ui)(H_Ave*10))/100]);//平均湿度
+ 308   5                Nixie_SetBuf(6,dot_SMG[((ui)(H_Ave*10))/10%10]);
+ 309   5                Nixie_SetBuf(7,Nodot_SMG[((ui)(H_Ave*10))%10]);
+ 310   5              }
+ 311   4            }
+ 312   3            else if(Interface_son==2) //时间回显
+ 313   3            {
+ 314   4              Nixie_SetBuf(0,Nodot_SMG[15]);//标识符-F
+ 315   4              Nixie_SetBuf(1,Nodot_SMG[Trg_Count/10]);    //触发次数
+ 316   4              Nixie_SetBuf(2,Nodot_SMG[Trg_Count%10]);
+ 317   4              if(Trg_Count==0)  //触发次数为0时不显示
+ 318   4              {
+ 319   5                Nixie_SetBuf(3,0XFF);
+ 320   5                Nixie_SetBuf(4,0XFF);
+ 321   5                Nixie_SetBuf(5,0XFF);
+ 322   5                Nixie_SetBuf(6,0XFF);
+ 323   5                Nixie_SetBuf(7,0XFF);
+ 324   5              }
+ 325   4              else
+ 326   4              {
+ 327   5                Nixie_SetBuf(3,Nodot_SMG[Trg_Time[2]/16]);
+ 328   5                Nixie_SetBuf(4,Nodot_SMG[Trg_Time[2]%16]);
+ 329   5                Nixie_SetBuf(5,0XBF);
+ 330   5                Nixie_SetBuf(6,Nodot_SMG[Trg_Time[1]/16]);
+ 331   5                Nixie_SetBuf(7,Nodot_SMG[Trg_Time[1]%16]);
+ 332   5              }
+ 333   4            }
+ 334   3          }
+ 335   2          else if(Interface==2) //参数界面
+ 336   2          {
+ 337   3            Nixie_SetBuf(0,0X8C);//标识符-P
+ 338   3            Nixie_SetBuf(1,0XFF);
+ 339   3            Nixie_SetBuf(2,0XFF);
+ 340   3            Nixie_SetBuf(3,0XFF);
+ 341   3            Nixie_SetBuf(4,0XFF);
+ 342   3            Nixie_SetBuf(5,0XFF);
+ 343   3            Nixie_SetBuf(6,Nodot_SMG[T_P/10]);
+ 344   3            Nixie_SetBuf(7,Nodot_SMG[T_P%10]);
+ 345   3          }
+ 346   2        }
+ 347   1      }
+ 348          
+ 349          
+ 350          void main()
+ 351          {
+ 352   1        Hardware_Init();
+ 353   1        while(1)
+ 354   1        {
+ 355   2          EA=0;
+ 356   2          USE_LED();
+ 357   2          EA=1;
+ 358   2          USE_SMG();
+ 359   2          USE_KEY();
+ 360   2          Task_Processing();
+ 361   2        }
+ 362   1      }
+ 363          
+ 364          void Timer0_Routine(void) interrupt 1
+C51 COMPILER V9.59.0.0   MAIN                                                              05/31/2023 15:09:46 PAGE 7   
+
+ 365          {
+ 366   1        F_temp++;
+ 367   1      }
+ 368          
+ 369          void Timer1_Routine(void) interrupt 3
+ 370          {
+ 371   1        static uc KEY_Count;
+ 372   1        static uc SMG_Count;
+ 373   1        static uc CLOCK_Count;
+ 374   1        static uc Temperature_Count;
+ 375   1        static uc AD_Count;
+ 376   1        static ui F_Count;
+ 377   1        static uc L4_Count;
+ 378   1        static ui S9_Count;
+ 379   1        
+ 380   1        SMG_Count++;
+ 381   1        if(SMG_Count==2){SMG_Count=0;Nixie_Loop();}
+ 382   1      
+ 383   1        KEY_Count++;
+ 384   1        if(KEY_Count==10){KEY_Count=0;KEY_flag=1;}
+ 385   1      
+ 386   1        CLOCK_Count++;
+ 387   1        if(CLOCK_Count==50){CLOCK_Count=0;CLOCK_flag=1;}
+ 388   1      
+ 389   1        AD_Count++;
+ 390   1        if(AD_Count==50){AD_Count=0;AD_flag=1;}
+ 391   1      
+ 392   1        Temperature_Count++;
+ 393   1        if(Temperature_Count==100){Temperature_Count=0;Temperature_flag=1;}
+ 394   1      
+ 395   1        F_Count++;
+ 396   1        if(F_Count==1000) //达到1s
+ 397   1        {
+ 398   2          F_Count=0;
+ 399   2          F=F_temp;
+ 400   2          F_temp=0;
+ 401   2        }
+ 402   1        
+ 403   1        if(L4_flag==1)
+ 404   1        {
+ 405   2          L4_Count++;
+ 406   2          if(L4_Count==100) //达到0.1s
+ 407   2          {
+ 408   3            L4_Count=0;
+ 409   3            L4_blink=~L4_blink;
+ 410   3          }
+ 411   2        }
+ 412   1        else{L4_Count=0;L4_blink=0;}
+ 413   1        
+ 414   1        /*长按*/
+ 415   1        if(S9_flag==1)
+ 416   1        {
+ 417   2          S9_Count++;
+ 418   2          if(S9_Count==2000)  //达到2s
+ 419   2          {
+ 420   3            S9_Count=0;
+ 421   3            Trg_Count=0;
+ 422   3            H_Max=0;T_Max=0;
+ 423   3            H_Ave=0;T_Ave=0;
+ 424   3            T_temp=0;H_temp=0;
+ 425   3            Trg_flag=0;
+ 426   3            L4_flag=0;
+C51 COMPILER V9.59.0.0   MAIN                                                              05/31/2023 15:09:46 PAGE 8   
+
+ 427   3            L6_flag=0;
+ 428   3            Invalid_data=0;
+ 429   3            Interface_flag=0;
+ 430   3          }
+ 431   2        }
+ 432   1        else
+ 433   1        {
+ 434   2          S9_Count=0;
+ 435   2        }
+ 436   1      }
+ 437          
+ 438          void Timer2_Routine(void) interrupt 12
+ 439          {
+ 440   1        static ui T2_Count;
+ 441   1        T2_Count++;
+ 442   1        if(T2_Count==3000)  //达到3s
+ 443   1        {
+ 444   2          T2_Count=0;
+ 445   2          Interface_TH=0; //退出温湿度页面
+ 446   2          Interface_flag=0;
+ 447   2          AUXR &= ~0x10;  //暂停计时
+ 448   2        }
+ 449   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2224    ----
+   CONSTANT SIZE    =     32    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     54    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =     12    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

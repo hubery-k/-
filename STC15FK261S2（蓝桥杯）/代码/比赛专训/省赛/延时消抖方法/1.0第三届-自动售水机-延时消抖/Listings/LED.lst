@@ -1,0 +1,50 @@
+C51 COMPILER V9.59.0.0   LED                                                               02/26/2023 15:00:53 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE LED
+OBJECT MODULE PLACED IN .\Objects\LED.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE LED.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\LED.lst)
+                    - TABS(2) OBJECT(.\Objects\LED.obj)
+
+line level    source
+
+   1          #include "LED.h"
+   2          
+   3          void LED_Init(void)
+   4          {
+   5   1        P2&=0X1F;//锁存
+   6   1        
+   7   1        P0=0XFF;//LED P0口高电平熄灭
+   8   1        P2=(P2&0x1F)|0X80;//高三位清零其余位保持不变后或上0X80
+   9   1      }
+  10          
+  11          void LED_Open(unsigned char Light)
+  12          {
+  13   1        LED_Init();
+  14   1        
+  15   1        P0&=~Light;//LED P0口低电平点亮
+  16   1        //P2=(P2&0x1F)|0X80;//高三位清零其余位保持不变后或上0X80
+  17   1        
+  18   1      }
+  19          
+  20          void LED_Close()
+  21          {
+  22   1        P2&=0X1F;//锁存
+  23   1        
+  24   1        P0=0XFF;//LED P0口高电平熄灭
+  25   1        P2=(P2&0x1F)|0X80;//高三位清零其余位保持不变后或上0X80
+  26   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     38    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,75 @@
+C51 COMPILER V9.59.0.0   KEY                                                               04/07/2023 23:26:29 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\KEY.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE KEY.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\KEY.lst)
+                    - TABS(2) OBJECT(.\Objects\KEY.obj)
+
+line level    source
+
+   1          /*
+   2           * @Author: error: error: git config user.name & please set dead value or install git && error: git config
+             - user.email & please set dead value or install git & please set dead value or install git
+   3           * @Date: 2023-03-22 11:28:18
+   4           * @LastEditors: error: error: git config user.name & please set dead value or install git && error: git c
+             -onfig user.email & please set dead value or install git & please set dead value or install git
+   5           * @LastEditTime: 2023-03-23 21:50:08
+   6           * @FilePath: \undefinedc:\Users\zckan\Desktop\单片机\STC15FK261S2（蓝桥杯）\14届再战\比赛专
+             -训\省赛\定时器扫描按键（按下触发）、数码管\9.第十一届\KEY.c
+   7           * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: 
+             -https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+   8           */
+   9          #include "KEY.h"
+  10          
+  11          static uc KeyNum;
+  12          
+  13          #define set(x) P4=(x>>3)|(x>>4);P3=x
+  14          #define get() ((P4&0X10)<<3)|((P4&0X04)<<4)|(P3&0X3F)
+  15          uc Trg,Cont;
+  16          void KEY_KBD()
+  17          {
+  18   1        uc Dat;
+  19   1        set(0X0F);
+  20   1        Dat=get();
+  21   1        set(0XF0);
+  22   1        Dat=(Dat|get())^0XFF;
+  23   1        Trg=Dat&(Dat^Cont);
+  24   1        Cont=Dat;
+  25   1      }
+  26          
+  27          void KEY_Loop()
+  28          {
+  29   1        KEY_KBD();
+  30   1        switch(Trg ^ 0xFF)
+  31   1        {
+  32   2          case 0XD7:KeyNum=12;break;    //s12
+  33   2          case 0XDB:KeyNum=13;break;    //s13
+  34   2          case 0XE7:KeyNum=16;break;    //s16
+  35   2          case 0XEB:KeyNum=17;break;    //s17
+  36   2        }
+  37   1      }
+  38          
+  39          uc KEY_Matrix()
+  40          {
+  41   1        uc Temp=0;
+  42   1        Temp=KeyNum;
+  43   1        KeyNum=0;
+  44   1        return Temp;
+  45   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    116    ----
+   CONSTANT SIZE    =   ----    ----
+C51 COMPILER V9.59.0.0   KEY                                                               04/07/2023 23:26:29 PAGE 2   
+
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

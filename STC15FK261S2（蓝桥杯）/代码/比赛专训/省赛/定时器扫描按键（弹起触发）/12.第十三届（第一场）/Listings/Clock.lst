@@ -1,0 +1,56 @@
+C51 COMPILER V9.59.0.0   CLOCK                                                             03/19/2023 00:34:04 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE CLOCK
+OBJECT MODULE PLACED IN .\Objects\Clock.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE Clock.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\Clock.
+                    -lst) TABS(2) OBJECT(.\Objects\Clock.obj)
+
+line level    source
+
+   1          #include "Clock.h"
+   2          #include "ds1302.h"     
+   3          
+   4          uc code R_Addr[3]={0X81,0X83,0X85};
+   5          uc code W_Addr[3]={0X80,0X82,0X84};
+   6          
+   7          
+   8          void Write_Ds1302(unsigned char temp);
+   9          void Write_Ds1302_Byte( unsigned char address,unsigned char dat );
+  10          unsigned char Read_Ds1302_Byte( unsigned char address );
+  11          
+  12          void Write_Time(uc* Time)
+  13          {
+  14   1        uc i=0;
+  15   1        Write_Ds1302_Byte(0x8E,0x00);//打开写保护
+  16   1        
+  17   1        for(i=0;i<3;i++)
+  18   1        {
+  19   2          Write_Ds1302_Byte(W_Addr[i],Time[i]);
+  20   2        }
+  21   1        
+  22   1        Write_Ds1302_Byte(0x8E,0x80);//打开写保护//关闭写保护
+  23   1      }
+  24          
+  25          void Read_Time(uc* Time)
+  26          {
+  27   1        uc i=0;
+  28   1        for(i=0;i<3;i++)
+  29   1        {
+  30   2          Time[i]=Read_Ds1302_Byte(R_Addr[i]);
+  31   2        }
+  32   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    119    ----
+   CONSTANT SIZE    =      6    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       8
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
